@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+wheels/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Secrets / env
+.env
+.env.local
+.env.*.local
+*.pem
+*-key.json
+service-account*.json
+**/credentials.json
+**/credentials.enc
+**/.encryption_key
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs / runtime artifacts
+*.log
+logs/
+*.pid
+.cache/
+
+# Local data / sync caches (should never be committed)
+data/
+local/
+tmp/
+.tmp/
+
+# Build outputs
+*.tar.gz
+*.zip
+node_modules/
+.next/
+
+# Hermes / GBrain runtime state (mirrored, not authoritative here)
+.hermes/state.db*
+.hermes/sessions/
+.hermes/cache/
+.gbrain/
