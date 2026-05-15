@@ -1,22 +1,15 @@
-"""Classifier — the LLM call that turns a SourceArtifact into an Envelope.
-
-For v1 the classifier is a single Anthropic API call using tool-use to
-enforce the Envelope schema. The router (routes.py) applies guardrails on
-top of the LLM output before dispatch.
-
-Implementation note: this module is intentionally thin. The real work is
-in the prompt (prompts.py) and the schema (envelope.py). Swapping models
-or providers is one constant change here.
-"""
+"""Classifier — turns SourceArtifact into Envelope via Anthropic tool-use."""
 from __future__ import annotations
 
 import logging
 import os
 from datetime import datetime
 from typing import Any
+from uuid import uuid4
 
 from pharoah.classifier.envelope import (
-    Envelope, SourceArtifact,
+    Category, Envelope, ExtractedEntities, Item,
+    OverallCategory, PrivacyFlag, Priority, SourceArtifact,
 )
 from pharoah.classifier.prompts import (
     CLASSIFIER_MODEL_PRIMARY, CLASSIFIER_VERSION,
@@ -29,14 +22,7 @@ log = logging.getLogger(__name__)
 
 def classify(source: SourceArtifact, model: str | None = None,
              api_key: str | None = None, dry_run: bool = False) -> Envelope:
-    """Classify a SourceArtifact into an Envelope.
-
-    Args:
-        source: normalized intake artifact
-        model: override classifier model (default: CLASSIFIER_MODEL_PRIMARY)
-        api_key: Anthropic API key (default: ANTHROPIC_API_KEY env var)
-        dry_run: if True, return stub Envelope without calling the LLM
-    """
+    """Classify a SourceArtifact. Returns a guardrail-enforced Envelope."""
     model = model or CLASSIFIER_MODEL_PRIMARY
     api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
     if dry_run:
@@ -49,41 +35,150 @@ def classify(source: SourceArtifact, model: str | None = None,
 
 
 def _stub_envelope(source: SourceArtifact, model: str) -> Envelope:
-    """Build a minimal valid Envelope for dry-run testing."""
-    from pharoah.classifier.envelope import (
-        Category, Item, OverallCategory, PrivacyFlag,
-    )
+    """Deterministic stub for dry_run testing — skips LLM call AND guardrails."""
     return Envelope(
-        source_id=source.source_id,
-        source_type=source.source_type,
-        classifier_model=model,
-        classifier_version=CLASSIFIER_VERSION,
-        items=[Item(
-            item_index=0,
-            category=Category.MANUAL_TRIAGE,
-            title="[dry-run stub]",
-            destination="triage",
-            confidence=0.99,
-            reasoning="dry_run=True; no LLM call performed",
-        )],
+        source_id=source.source_id, source_type=source.source_type,
+        classifier_model=model, classifier_version=CLASSIFIER_VERSION,
+        items=[Item(item_index=0, category=Category.MANUAL_TRIAGE,
+                    title="[dry-run stub]", destination="triage",
+                    confidence=0.99, reasoning="dry_run=True")],
         overall_category=OverallCategory.AMBIGUOUS,
         privacy_flag=PrivacyFlag.PERSONAL,
         transcript_excerpt=source.transcript[:200],
     )
 
 
+def _envelope_tool_schema() -> dict[str, Any]:
+    """JSON schema for produce_envelope. LLM only fills LLM-owned fields."""
+    return {
+        "type": "object",
+        "required": ["items", "overall_category", "privacy_flag", "needs_triage"],
+        "properties": {
+            "items": {"type": "array", "items": _item_schema(), "minItems": 1},
+            "overall_category": {"type": "string",
+                "enum": [v.value for v in OverallCategory]},
+            "privacy_flag": {"type": "string",
+                "enum": [v.value for v in PrivacyFlag]},
+            "needs_triage": {"type": "boolean"},
+        },
+    }
+
+
+def _item_schema() -> dict[str, Any]:
+    return {"type": "object",
+        "required": ["item_index","category","title","destination",
+                     "confidence","reasoning"],
+        "properties": _item_props()}
+
+
+def _item_props() -> dict[str, Any]:
+    return {
+        "item_index": {"type": "integer"},
+        "category": {"type": "string", "enum": [v.value for v in Category]},
+        "subcategory": {"type": ["string", "null"]},
+        "title": {"type": "string"},
+        "description": {"type": "string"},
+        "destination": {"type": "string"},
+        "secondary_destinations": {"type": "array", "items": {"type": "string"}},
+        "due_date": {"type": ["string", "null"]},
+        "priority": {"type": ["string", "null"], "enum": [v.value for v in Priority] + [None]},
+        "extracted_entities": _entities_schema(),
+        "confidence": {"type": "number"},
+        "reasoning": {"type": "string"},
+    }
+
+
+def _entities_schema() -> dict[str, Any]:
+    str_arr = {"type": "array", "items": {"type": "string"}}
+    return {
+        "type": "object",
+        "properties": {
+            "people": str_arr, "projects": str_arr, "tags": str_arr,
+            "linear_issue_refs": str_arr, "dates_mentioned": str_arr,
+        },
+    }
+
+
 def _call_anthropic(source: SourceArtifact, model: str, api_key: str) -> Envelope:
-    """Make the actual Anthropic API call with tool-use for Envelope schema.
+    """Real Anthropic tool-use call. Returns a fully-formed Envelope."""
+    from shared.clients.anthropic import AnthropicClient
+    client = AnthropicClient(api_key=api_key)
+    user_msg = render_user_message(
+        source_id=source.source_id, source_type=source.source_type.value,
+        captured_at_iso=source.captured_at.isoformat(),
+        transcript=source.transcript,
+        title_hint=source.title_hint,
+        duration_seconds=source.metadata.get("duration_seconds"),
+    )
+    tool_input = client.classify_voicenote(
+        system_prompt=SYSTEM_PROMPT, user_message=user_msg,
+        envelope_tool_schema=_envelope_tool_schema(), model=model,
+    )
+    return _build_envelope_from_tool_input(source, tool_input, model)
 
-    Stub for v1: this will call anthropic SDK with a 'produce_envelope' tool
-    whose input_schema is derived from the Envelope pydantic model. The tool
-    call arguments are validated into an Envelope instance.
 
-    Not yet implemented — placeholder raises NotImplementedError. Wire up
-    once packages/shared/clients/anthropic.py exists (or use the SDK
-    directly here for v1).
-    """
-    raise NotImplementedError(
-        "_call_anthropic not yet implemented. "
-        "Use dry_run=True for routing tests until the Anthropic client is wired."
+def _build_envelope_from_tool_input(
+    source: SourceArtifact, tool_input: dict[str, Any], model: str,
+) -> Envelope:
+    """Wrap LLM-produced content into a full Envelope, filling runtime fields."""
+    items = [_build_item(d) for d in tool_input["items"]]
+    return Envelope(
+        source_id=source.source_id,
+        source_type=source.source_type,
+        classifier_model=model,
+        classifier_version=CLASSIFIER_VERSION,
+        items=items,
+        overall_category=OverallCategory(tool_input["overall_category"]),
+        privacy_flag=PrivacyFlag(tool_input["privacy_flag"]),
+        needs_triage=tool_input["needs_triage"],
+        transcript_excerpt=source.transcript[:200],
+    )
+
+
+def _build_item(d: dict[str, Any]) -> Item:
+    """Build an Item from the LLM's tool input dict, with safe defaults."""
+    ee_in = d.get("extracted_entities") or {}
+    from datetime import date
+    dates = []
+    for s in ee_in.get("dates_mentioned") or []:
+        try:
+            dates.append(date.fromisoformat(s))
+        except Exception:
+            log.warning(f"Bad date_mentioned: {s!r}")
+    ee = ExtractedEntities(
+        people=ee_in.get("people") or [],
+        projects=ee_in.get("projects") or [],
+        tags=ee_in.get("tags") or [],
+        linear_issue_refs=ee_in.get("linear_issue_refs") or [],
+        dates_mentioned=dates,
+    )
+    return _finalize_item(d, ee)
+
+
+def _finalize_item(d: dict[str, Any], ee: ExtractedEntities) -> Item:
+    """Construct Item with safe parsing for nullable date/priority."""
+    from datetime import date
+    due = None
+    if d.get("due_date"):
+        try:
+            due = date.fromisoformat(d["due_date"])
+        except Exception:
+            log.warning(f"Bad due_date: {d['due_date']!r}")
+    prio = None
+    if d.get("priority"):
+        p = d["priority"].lower().strip()
+        synonyms = {"medium": "normal", "med": "normal", "mid": "normal",
+                    "high priority": "high", "top": "urgent", "critical": "urgent"}
+        p = synonyms.get(p, p)
+        try:
+            prio = Priority(p)
+        except ValueError:
+            log.warning(f"Unknown priority value: {d["priority"]!r}; dropping")
+    return Item(
+        item_index=d["item_index"], category=Category(d["category"]),
+        subcategory=d.get("subcategory"), title=d["title"],
+        description=d.get("description", ""), destination=d["destination"],
+        secondary_destinations=d.get("secondary_destinations") or [],
+        due_date=due, priority=prio, extracted_entities=ee,
+        confidence=d["confidence"], reasoning=d.get("reasoning", ""),
     )
