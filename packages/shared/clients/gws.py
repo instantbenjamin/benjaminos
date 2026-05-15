@@ -15,7 +15,7 @@ from typing import Any
 
 log = logging.getLogger(__name__)
 
-DEFAULT_SA_PATH = Path("~/.config/gws/eir-agents-sa.json").expanduser()
+DEFAULT_SA_PATH = Path("~/.config/gws/benjaminos-sa.json").expanduser()
 DEFAULT_IMPERSONATE = "b@white.ai"
 
 SCOPE_DRIVE_READONLY = "https://www.googleapis.com/auth/drive.readonly"
