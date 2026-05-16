@@ -60,6 +60,10 @@ def _dispatch_one(item, dest: str) -> dict:
             return _to_linear(item, dest)
         if dest.startswith("wiki:"):
             return _to_wiki(item, dest)
+        if dest.startswith("supabase:"):
+            return _to_supabase(item, dest)
+        if dest == "gbrain":
+            return _to_gbrain(item, dest)
         # Other sinks not yet wired
         return {"destination": dest, "skipped": "not_implemented"}
     except Exception as e:
@@ -140,3 +144,87 @@ def _format_wiki_content(item) -> str:
 
 if __name__ == "__main__":
     main()
+
+
+def _to_supabase(item, dest: str) -> dict:
+    """supabase:* destinations -> public.notes for v1."""
+    import os, httpx
+    url = os.environ["SUPABASE_URL"]
+    key = os.environ["SUPABASE_ANON_KEY"]
+    payload = {
+        "source": "voice_memo",
+        "title": item.title,
+        "raw_text": item.description,
+        "summary": item.reasoning or item.title,
+        "tags": list(item.extracted_entities.tags) + [item.category.value],
+        "metadata": {"destination": dest,
+                     "subcategory": item.subcategory,
+                     "confidence": item.confidence,
+                     "pharoah_source": "voicenote_classifier"},
+    }
+    return _post_to_supabase(url, key, "notes", payload, dest)
+
+
+def _post_to_supabase(url, key, table, payload, dest):
+    import httpx
+    r = httpx.post(f"{url}/rest/v1/{table}",
+        headers={"apikey": key, "Authorization": f"Bearer {key}",
+                 "Content-Type": "application/json",
+                 "Prefer": "return=representation"},
+        json=payload, timeout=30)
+    r.raise_for_status()
+    row = r.json()[0] if isinstance(r.json(), list) else r.json()
+    return {"destination": dest, "table": f"public.{table}",
+            "id": row.get("id"), "title": row.get("title")}
+
+
+def _to_gbrain(item, dest: str) -> dict:
+    """Dispatch to gbrain via CLI subprocess."""
+    lines = ["---", f"title: {item.title}",
+             f"source: pharoah_classifier",
+             f"category: {item.category.value}",
+             f"confidence: {item.confidence}", "---\n",
+             f"# {item.title}\n"]
+    if item.description:
+        lines.append(item.description + "\n")
+    if item.reasoning:
+        lines.append(f"_Classifier reasoning: {item.reasoning}_")
+    body = "\n".join(lines) + "\n"
+    return _exec_gbrain_put(item, body, dest)
+
+
+def _exec_gbrain_put(item, body, dest):
+    import subprocess, tempfile, os
+    GBRAIN = "/home/benjaminbot/.bun/bin/gbrain"
+    env = os.environ.copy()
+    env["PATH"] = "/home/benjaminbot/.bun/bin:" + env.get("PATH", "")
+    gb_env = "/home/benjaminbot/.gbrain/.env"
+    if os.path.exists(gb_env):
+        for line in open(gb_env):
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, _, v = line.partition("=")
+                env.setdefault(k, v)
+    return _run_gbrain(GBRAIN, body, env, dest, item)
+
+
+def _run_gbrain(bin_path, body, env, dest, item):
+    """gbrain put requires --content flag and inline-embeds (needs OpenAI key)."""
+    import subprocess, re
+    slug = "pharoah/voicenotes/" + (
+        re.sub(r"[^a-zA-Z0-9-]+", "-", item.title.lower()).strip("-")[:50]
+        or "entry"
+    )
+    try:
+        r = subprocess.run(
+            [bin_path, "put", slug, "--content", body],
+            env=env, capture_output=True, text=True, timeout=15,
+        )
+    except subprocess.TimeoutExpired:
+        return {"destination": dest, "slug": slug,
+                "error": "gbrain put timed out (OpenAI embed likely)"}
+    if r.returncode != 0:
+        return {"destination": dest, "slug": slug,
+                "error": (r.stderr or r.stdout)[:300]}
+    return {"destination": dest, "slug": slug,
+            "stdout": r.stdout[:200].strip()}
