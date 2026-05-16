@@ -7,7 +7,7 @@ from typing import Any
 import httpx
 
 CLICKUP_API = "https://api.clickup.com/api/v2"
-INBOX_LIST_ID = "901110606974"  # Benjamin HQ list in the Benjamin space (was 901403040568 — inaccessible from this token)
+INBOX_LIST_ID = "901403040568"  # Benjamin HQ / 2 Areas / Inbox (under b@white.ai Untold workspace)
 
 
 class ClickUpClient:
