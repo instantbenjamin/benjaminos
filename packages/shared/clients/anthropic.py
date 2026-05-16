@@ -23,7 +23,7 @@ class AnthropicClient:
     def classify_voicenote(
         self, system_prompt: str, user_message: str,
         envelope_tool_schema: dict[str, Any], model: str,
-        max_tokens: int = 4096, temperature: float = 0.0,
+        max_tokens: int = 8192, temperature: float = 0.0,
     ) -> dict[str, Any]:
         """Tool-use call. Returns the produce_envelope tool's input dict."""
         tool = {

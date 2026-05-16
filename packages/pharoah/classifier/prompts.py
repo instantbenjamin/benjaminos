@@ -5,7 +5,7 @@ Bump CLASSIFIER_VERSION when system prompt is materially edited.
 """
 from __future__ import annotations
 
-CLASSIFIER_VERSION = "prompt-v1.0"
+CLASSIFIER_VERSION = "prompt-v1.1"
 CLASSIFIER_MODEL_PRIMARY = "claude-sonnet-4-6"
 CLASSIFIER_MODEL_FALLBACK = "claude-haiku-4-5-20251001"
 
@@ -60,6 +60,9 @@ Common secondary_destinations: ideas -> ["gbrain"]; journal -> ["gbrain"]; meeti
 
 ## Date handling
 Resolve relative dates to ISO (YYYY-MM-DD) using captured_at as anchor. "Tomorrow" with captured_at 2026-05-15 = "2026-05-16". DO NOT put relative phrases in dates_mentioned. Either resolve or omit.
+
+## Confidence calibration
+If an item could plausibly be 2+ categories (e.g. journal vs scattered notes), use 0.65-0.75 - DON'T pad to 0.85+. A 0.72 is more useful than a fake 0.88. Only reach 0.85+ when category AND destination are crystal clear.
 
 ## Priority enum
 Use only: low | normal | high | urgent. NOT medium - that's normal.

@@ -7,7 +7,7 @@ from pharoah.classifier.prompts import (
 
 
 def test_version_pinned():
-    assert CLASSIFIER_VERSION == "prompt-v1.0"
+    assert CLASSIFIER_VERSION == "prompt-v1.1"
 
 
 def test_system_prompt_non_empty():

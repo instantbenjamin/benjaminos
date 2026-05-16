@@ -58,6 +58,8 @@ def _dispatch_one(item, dest: str) -> dict:
             return _to_clickup(item, dest)
         if dest.startswith("linear:"):
             return _to_linear(item, dest)
+        if dest.startswith("wiki:"):
+            return _to_wiki(item, dest)
         # Other sinks not yet wired
         return {"destination": dest, "skipped": "not_implemented"}
     except Exception as e:
@@ -89,7 +91,52 @@ def _to_linear(item, dest: str) -> dict:
                            team=team, project=project)
     return {"destination": dest, "id": issue.get("id"),
             "identifier": issue.get("identifier"), "url": issue.get("url")}
+def _to_wiki(item, dest: str) -> dict:
+    """Dispatch wiki:<path>/<file>.md. Creates file w/ unique stamped name."""
+    from shared.clients.gws import GWSClient, WIKI_FOLDER_ID
+    from datetime import datetime
+    path = dest[len("wiki:"):]
+    if path.endswith("/"):
+        path = path + _slugify(item.title) + ".md"
+    parts = path.split("/")
+    folder_parts, filename = parts[:-1], parts[-1]
+    c = GWSClient()
+    folder_id = c.resolve_folder_path(WIKI_FOLDER_ID, *folder_parts)
+    base, _, ext = filename.rpartition(".")
+    ext = ext or "md"; base = base or filename
+    unique = f"{base}-{datetime.now().strftime('%H%M')}-pharoah.{ext}"
+    content = _format_wiki_content(item)
+    r = c.create_text_file(folder_id, unique, content)
+    return {"destination": dest, "id": r["id"], "name": r["name"],
+            "url": r.get("webViewLink")}
 
+
+def _slugify(text: str) -> str:
+    import re
+    s = re.sub(r"[^a-zA-Z0-9]+", "-", text.lower()).strip("-")
+    return s[:60] or "entry"
+
+
+def _format_wiki_content(item) -> str:
+    """Markdown content for a wiki entry from an Item."""
+    from datetime import datetime, UTC
+    lines = ["---",
+             f"title: {item.title}",
+             f"created: {datetime.now(UTC).isoformat()}",
+             "source: pharoah_classifier",
+             f"category: {item.category.value}"]
+    if item.subcategory:
+        lines.append(f"subcategory: {item.subcategory}")
+    if item.extracted_entities.tags:
+        lines.append(f"tags: [{', '.join(item.extracted_entities.tags)}]")
+    lines.append(f"confidence: {item.confidence}")
+    lines.append("---\n")
+    lines.append(f"# {item.title}\n")
+    if item.description:
+        lines.append(item.description + "\n")
+    if item.reasoning:
+        lines.append(f"_Classifier reasoning: {item.reasoning}_")
+    return "\n".join(lines) + "\n"
 
 if __name__ == "__main__":
     main()

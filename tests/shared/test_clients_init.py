@@ -32,4 +32,4 @@ def test_anthropic_requires_key(monkeypatch):
 
 
 def test_clickup_inbox_constant():
-    assert INBOX_LIST_ID == "901403040568"
+    assert INBOX_LIST_ID == "901110606974"

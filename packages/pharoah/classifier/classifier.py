@@ -121,6 +121,12 @@ def _build_envelope_from_tool_input(
     source: SourceArtifact, tool_input: dict[str, Any], model: str,
 ) -> Envelope:
     """Wrap LLM-produced content into a full Envelope, filling runtime fields."""
+    if "items" not in tool_input or not tool_input.get("items"):
+        import logging
+        logging.getLogger(__name__).warning(
+            f"LLM envelope missing items (keys={list(tool_input.keys())})"
+        )
+        return _triage_fallback(source, model)
     items = [_build_item(d) for d in tool_input["items"]]
     return Envelope(
         source_id=source.source_id,
@@ -181,4 +187,20 @@ def _finalize_item(d: dict[str, Any], ee: ExtractedEntities) -> Item:
         secondary_destinations=d.get("secondary_destinations") or [],
         due_date=due, priority=prio, extracted_entities=ee,
         confidence=d["confidence"], reasoning=d.get("reasoning", ""),
+    )
+
+
+def _triage_fallback(source: SourceArtifact, model: str) -> Envelope:
+    """Fallback when LLM response is malformed (truncated, missing items)."""
+    return Envelope(
+        source_id=source.source_id, source_type=source.source_type,
+        classifier_model=model, classifier_version=CLASSIFIER_VERSION,
+        items=[Item(item_index=0, category=Category.MANUAL_TRIAGE,
+                    title="Malformed classifier response — manual triage",
+                    description="LLM tool_use lacked items (likely truncation).",
+                    destination="triage", confidence=0.99,
+                    reasoning="Defensive fallback.")],
+        overall_category=OverallCategory.AMBIGUOUS,
+        privacy_flag=PrivacyFlag.PERSONAL, needs_triage=True,
+        transcript_excerpt=source.transcript[:200],
     )
