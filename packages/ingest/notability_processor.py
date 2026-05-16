@@ -41,22 +41,25 @@ def _log(msg: str):
     print(msg, flush=True)
 
 
-def discover_pdfs(gws) -> list[dict]:
-    """Walk Notability folder + 5 category subfolders; return all PDF metadata."""
-    pdfs = []
-    subfolders = gws.list_files_in_folder(
-        NOTABILITY_FOLDER_ID,
-        mime_type="application/vnd.google-apps.folder",
-        page_size=50)
-    for subfolder in subfolders:
-        files = gws.list_files_in_folder(
-            subfolder["id"],
-            mime_type="application/pdf",
-            page_size=200)
-        for f in files:
-            f["_category"] = subfolder["name"]
-            pdfs.append(f)
-    return pdfs
+def discover_pdfs(gws):
+    """Walk Notability + 5 subfolders. Prefer .zip/.ntb over .pdf."""
+    files_by_base = {}
+    subfolders = gws.list_files_in_folder(NOTABILITY_FOLDER_ID,
+        mime_type="application/vnd.google-apps.folder", page_size=50)
+    for sf in subfolders:
+        kids = gws.list_files_in_folder(sf["id"], page_size=400)
+        for f in kids:
+            nm = f["name"]
+            if not nm.endswith((".pdf", ".zip", ".ntb")):
+                continue
+            base = nm.rsplit(".", 1)[0]
+            key = (sf["id"], base)
+            f["_category"] = sf["name"]
+            ex = files_by_base.get(key)
+            if not ex or (nm.endswith((".zip", ".ntb"))
+                          and not ex["name"].endswith((".zip", ".ntb"))):
+                files_by_base[key] = f
+    return list(files_by_base.values())
 
 
 def _summarize(receipts: dict) -> dict:
