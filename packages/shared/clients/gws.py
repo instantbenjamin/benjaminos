@@ -161,3 +161,16 @@ class GWSClient:
             fields="id,name,webViewLink",
             supportsAllDrives=True,
         ).execute()
+
+
+    def download_bytes(self, file_id: str) -> bytes:
+        """Download binary file content (e.g. PDF, ZIP). NOT for Google Docs."""
+        from googleapiclient.http import MediaIoBaseDownload
+        request = self._drive_service().files().get_media(
+            fileId=file_id, supportsAllDrives=True)
+        buf = io.BytesIO()
+        downloader = MediaIoBaseDownload(buf, request)
+        done = False
+        while not done:
+            _, done = downloader.next_chunk()
+        return buf.getvalue()

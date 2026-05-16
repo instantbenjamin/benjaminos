@@ -49,3 +49,36 @@ class AnthropicClient:
             f"No produce_envelope tool_use in response. Got stop_reason={resp.stop_reason}, "
             f"content_types={[getattr(b, 'type', '?') for b in resp.content]}"
         )
+
+
+    def ocr_pdf(self, pdf_bytes: bytes,
+                model: str = "claude-sonnet-4-20250514",
+                max_tokens: int = 8192) -> str:
+        """OCR a PDF via Claude vision. Returns concatenated transcript."""
+        import base64
+        b64 = base64.standard_b64encode(pdf_bytes).decode("utf-8")
+        prompt = (
+            "PDF of handwritten/typed Notability notes. Transcribe ALL "
+            "content as plain text/markdown. Preserve structure (headings "
+            "as #, lists as -). Mark illegible passages [illegible]. "
+            "Output ONLY transcript - no preamble."
+        )
+        return self._do_ocr(b64, prompt, model, max_tokens)
+
+    def _do_ocr(self, b64_pdf: str, prompt: str, model: str,
+                max_tokens: int) -> str:
+        resp = self._client().messages.create(
+            model=model, max_tokens=max_tokens, temperature=0,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "document",
+                     "source": {"type": "base64",
+                                "media_type": "application/pdf",
+                                "data": b64_pdf}},
+                    {"type": "text", "text": prompt},
+                ],
+            }],
+        )
+        return "".join(b.text for b in resp.content
+                       if getattr(b, "type", None) == "text")
