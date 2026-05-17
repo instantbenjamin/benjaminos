@@ -295,6 +295,17 @@ def _build_http_app():
 
     mcp.settings.host = os.environ.get("PHAROAH_MCP_HOST", "127.0.0.1")
     mcp.settings.port = int(os.environ.get("PHAROAH_MCP_PORT", "8765"))
+    extra_hosts = os.environ.get("PHAROAH_MCP_ALLOWED_HOSTS", "")
+    if extra_hosts:
+        for h in extra_hosts.split(","):
+            h = h.strip()
+            if not h:
+                continue
+            if h not in mcp.settings.transport_security.allowed_hosts:
+                mcp.settings.transport_security.allowed_hosts.append(h)
+            origin = f"https://{h}"
+            if origin not in mcp.settings.transport_security.allowed_origins:
+                mcp.settings.transport_security.allowed_origins.append(origin)
     app = mcp.streamable_http_app()
     # Inject middleware into the Starlette app
     app.user_middleware.insert(0, Middleware(BearerAuth))
