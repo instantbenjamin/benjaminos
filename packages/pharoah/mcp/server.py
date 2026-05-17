@@ -306,6 +306,11 @@ def _build_http_app():
             origin = f"https://{h}"
             if origin not in mcp.settings.transport_security.allowed_origins:
                 mcp.settings.transport_security.allowed_origins.append(origin)
+    # Strip HTTP-disallowed tools (Infisical access stays on stdio only —
+    # Cowork has its own mcp__infisical__* connector; we don't expose secret-fetch
+    # via the public Cloudflare-fronted surface).
+    for tool_name in ("infisical_get_secret",):
+        mcp._tool_manager._tools.pop(tool_name, None)
     app = mcp.streamable_http_app()
     # Inject middleware into the Starlette app
     app.user_middleware.insert(0, Middleware(BearerAuth))
