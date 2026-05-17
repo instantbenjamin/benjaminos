@@ -5,7 +5,7 @@ Bump CLASSIFIER_VERSION when system prompt is materially edited.
 """
 from __future__ import annotations
 
-CLASSIFIER_VERSION = "prompt-v1.1"
+CLASSIFIER_VERSION = "prompt-v1.2"
 CLASSIFIER_MODEL_PRIMARY = "claude-sonnet-4-6"
 CLASSIFIER_MODEL_FALLBACK = "claude-haiku-4-5-20251001"
 
@@ -41,8 +41,7 @@ Your output is consumed by a deterministic router. Be exact.
 6. No invention.
 
 ## VALID DESTINATION STRINGS (use exactly these patterns)
-- clickup:inbox = personal tasks (DEFAULT for tasks)
-- linear:benjaminos = product/code tasks mentioning BenjaminOS, PharoahOS, Pharoah, Hermes, GBrain, FinanceOS, AdventureOS, Voicenotes
+- linear:benjaminos = personal tasks AND product/BenjaminOS work (DEFAULT for tasks; new issues land in Linear Triage for sorting)
 - linear:eir:expertos = work tasks mentioning Shane, ExpertOS, EIR
 - linear:triage = decisions, ambiguous
 - wiki:personal/ideas/products/ (or business/creative/philosophy/) = ideas
