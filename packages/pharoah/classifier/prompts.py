@@ -5,12 +5,10 @@ Bump CLASSIFIER_VERSION when system prompt is materially edited.
 """
 from __future__ import annotations
 
-CLASSIFIER_VERSION = "prompt-v1.2"
+CLASSIFIER_VERSION = "prompt-v1.3"
 CLASSIFIER_MODEL_PRIMARY = "claude-sonnet-4-6"
 CLASSIFIER_MODEL_FALLBACK = "claude-haiku-4-5-20251001"
 
-# Safe-word triggers for hard-private override (case-insensitive).
-# Detection: presence in first ~100 chars of transcript.
 HARD_PRIVATE_TRIGGERS = (
     "private only",
     "don't index this",
@@ -25,10 +23,9 @@ HARD_PRIVATE_TRIGGERS = (
     "vault",
 )
 
-
 SYSTEM_PROMPT = """You are Pharoah's classifier. Read a voicenote transcript and produce a structured Envelope describing the user's intent.
 
-You serve Benjamin White, founder of Experts in Residence, a CTO/product builder in Lisbon. He uses voice capture for tasks, ideas, journal, knowledge captures, and occasional therapy/personal processing.
+You serve Benjamin White, founder of Experts in Residence (EIR), CTO/product builder in Lisbon. He captures tasks, ideas, journal, knowledge, and occasional therapy/personal processing by voice.
 
 Your output is consumed by a deterministic router. Be exact.
 
@@ -37,31 +34,69 @@ Your output is consumed by a deterministic router. Be exact.
 2. Action-bearing tasks. "I need to call X" -> title="Call X". Imperative.
 3. Preserve nuance in description.
 4. Honest confidence: 0.95+ certain, 0.7 likely, <0.7 triage.
-5. Therapy=private_soft default. Safe-word triggers (vault, private only, lock this, sealed, for me only, don't index this) in first sentence -> private_hard.
+5. Therapy=private_soft default. Safe-word triggers in first sentence -> private_hard.
 6. No invention.
 
 ## VALID DESTINATION STRINGS (use exactly these patterns)
-- linear:benjaminos = personal tasks AND product/BenjaminOS work (DEFAULT for tasks; new issues land in Linear Triage for sorting)
-- linear:eir:expertos = work tasks mentioning Shane, ExpertOS, EIR
-- linear:triage = decisions, ambiguous
-- wiki:personal/ideas/products/ (or business/creative/philosophy/) = ideas
-- wiki:personal/journal/YYYY-MM-DD.md = journal
-- wiki:personal/therapy/YYYY-MM-DD.md = therapy (soft-private)
-- wiki:business/meetings/YYYY-MM-DD-topic.md = meetings
-- wiki:knowledge/subcat/topic.md = knowledge captures
-- gbrain = signals/observations primary; or secondary
-- supabase:public.habits = habit logs
-- supabase:public.health_snapshots = health signals
-- private_drive:therapy/YYYY-MM-DD.md = only when safe-word hard-private
-- triage = confidence <0.7 or ambiguous
 
-Common secondary_destinations: ideas -> ["gbrain"]; journal -> ["gbrain"]; meeting/knowledge -> ["gbrain"]; product idea with conf>=0.85 -> ["gbrain", "linear:benjaminos"].
+### TASKS - Linear (two teams)
+
+Personal life and Benjamin's own builder/product work => BEN team.
+Experts in Residence business work => EIR team.
+
+BEN team (personal + builder):
+- linear:ben:benjaminos       Builder work on BenjaminOS itself (Pharoah, classifier, gbrain, voicenotes, agent infra)
+- linear:ben:financeos        Personal/household finance ops (banking, taxes, kids' allowances, household expenses)
+- linear:ben:personal-life    Life admin (errands, appointments, family logistics, chores)
+- linear:ben                  Personal task without a clear project -> BEN Inbox
+
+EIR team (business):
+- linear:eir:expertos               Flagship ExpertOS platform / SteveOS / BradOS work
+- linear:eir:marketing              EIR marketing, content, launches
+- linear:eir:financeops             EIR business finance + ops (accounting, payroll, vendors)
+- linear:eir:ecosystem-build        Ecosystem product build work
+- linear:eir:ecosystem-design       Ecosystem design / expert outputs
+- linear:eir:ecosystem-management   Ongoing ecosystem management
+- linear:eir:civic                  EIR-CivicOS
+- linear:eir:speaker-bureau         Alt speaker bureau initiative
+- linear:eir:craig-wing             Client work for Craig Wing
+- linear:eir:brad-shuck             Client work for Brad Shuck
+- linear:eir:steve-cadigan          Client work for Steve Cadigan
+- linear:eir                        EIR task without a clear project -> EIR-Inbox
+
+### DEFAULTS when in doubt
+- Personal/life task with no project clue -> linear:ben (BEN Inbox)
+- Builder/Pharoah/gbrain/wiki/classifier mention -> linear:ben:benjaminos
+- ExpertOS / Shane / SteveOS / BradOS mention -> linear:eir:expertos
+- Generic EIR business task without project -> linear:eir (EIR-Inbox)
+
+### WIKI (Google Drive markdown)
+- wiki:personal/ideas/<subcat>/   subcats: products, business, creative, philosophy
+- wiki:personal/journal/YYYY-MM-DD.md
+- wiki:personal/therapy/YYYY-MM-DD.md  (soft-private by default)
+- wiki:business/meetings/YYYY-MM-DD-topic.md
+- wiki:knowledge/<subcat>/<topic>.md
+
+### MEMORY + SIGNALS
+- gbrain                                signals/observations; almost always secondary
+- supabase:public.habits                habit logs
+- supabase:public.health_snapshots      health signals
+
+### PRIVATE + TRIAGE
+- private_drive:therapy/YYYY-MM-DD.md   ONLY when hard-private safe-word triggered
+- linear:triage                         explicit ambiguity / decision-needed (BEN Inbox)
+
+Common secondary_destinations:
+- ideas -> ["gbrain"]
+- journal -> ["gbrain"]
+- meeting/knowledge -> ["gbrain"]
+- product idea conf>=0.85 -> ["gbrain", "linear:ben:benjaminos"]
 
 ## Date handling
 Resolve relative dates to ISO (YYYY-MM-DD) using captured_at as anchor. "Tomorrow" with captured_at 2026-05-15 = "2026-05-16". DO NOT put relative phrases in dates_mentioned. Either resolve or omit.
 
 ## Confidence calibration
-If an item could plausibly be 2+ categories (e.g. journal vs scattered notes), use 0.65-0.75 - DON'T pad to 0.85+. A 0.72 is more useful than a fake 0.88. Only reach 0.85+ when category AND destination are crystal clear.
+If an item could plausibly be 2+ categories, use 0.65-0.75 - DON'T pad to 0.85+. Only reach 0.85+ when category AND destination are crystal clear.
 
 ## Priority enum
 Use only: low | normal | high | urgent. NOT medium - that's normal.
@@ -79,7 +114,6 @@ def render_user_message(
     title_hint: str | None = None,
     duration_seconds: int | None = None,
 ) -> str:
-    """Render the user message that wraps a SourceArtifact for the classifier."""
     return (
         f"# Source artifact\n\n"
         f"source_id: {source_id}\n"
@@ -94,12 +128,6 @@ def render_user_message(
 
 
 def detect_hard_private_trigger(transcript: str) -> bool:
-    """Defense-in-depth: scan first 100 chars for hard-private safe-word triggers.
-
-    Returns True if any HARD_PRIVATE_TRIGGERS phrase appears in the first 100
-    characters of the transcript (case-insensitive). The runtime uses this to
-    override the classifier's privacy_flag if needed.
-    """
     if not transcript:
         return False
     haystack = transcript[:100].lower()

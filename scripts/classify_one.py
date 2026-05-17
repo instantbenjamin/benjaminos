@@ -83,19 +83,73 @@ def _to_clickup(item, dest: str) -> dict:
     return {"destination": dest, "id": r.get("id"), "url": r.get("url")}
 
 
+
+BEN_PROJECT_SLUGS = {
+    "benjaminos": "BenjaminOS",
+    "financeos": "FinanceOS",
+    "personal-life": "Personal-Life",
+    "personal": "Personal-Life",
+    "pharoah-daily": "Pharoah-Daily",
+    "adventureos": "BenjaminOS",
+    "inbox": "Inbox",
+    "triage": "Inbox",
+}
+
+EIR_PROJECT_SLUGS = {
+    "expertos": "EIR-ExpertOS",
+    "marketing": "EIR-Marketing",
+    "financeops": "EIR-Finance+Ops",
+    "ecosystem-build": "EIR-Ecosystem-Build",
+    "ecosystem-design": "EIR-Ecosystem Design",
+    "ecosystem-management": "EIR-Ecosystem-Management",
+    "civic": "EIR-CivicOS",
+    "civicos": "EIR-CivicOS",
+    "speaker-bureau": "EIR-Speaker-Bureau",
+    "craig-wing": "EIR-Craig-Wing",
+    "craig": "EIR-Craig-Wing",
+    "brad-shuck": "EIR-Brad-Shuck",
+    "brad": "EIR-Brad-Shuck",
+    "steve-cadigan": "EIR-Steve-Cadigan",
+    "steve": "EIR-Steve-Cadigan",
+    "inbox": "EIR-Inbox",
+    "triage": "EIR-Inbox",
+}
+
+
+def _parse_linear_destination(dest: str):
+    if not dest.startswith("linear:"):
+        raise ValueError(f"Not a linear destination: {dest}")
+    rest = dest[len("linear:"):]
+    parts = rest.split(":", 1)
+    head = parts[0].lower()
+    tail = parts[1].lower() if len(parts) > 1 else None
+    if head == "ben":
+        slug = tail or "inbox"
+        return ("Benjamin", BEN_PROJECT_SLUGS.get(slug, "Inbox"))
+    if head == "eir":
+        slug = tail or "inbox"
+        return ("EIR", EIR_PROJECT_SLUGS.get(slug, "EIR-Inbox"))
+    if head == "triage":
+        return ("Benjamin", "Inbox")
+    if head in BEN_PROJECT_SLUGS:
+        return ("Benjamin", BEN_PROJECT_SLUGS[head])
+    if head in EIR_PROJECT_SLUGS:
+        return ("EIR", EIR_PROJECT_SLUGS[head])
+    return ("Benjamin", "Inbox")
+
+
 def _to_linear(item, dest: str) -> dict:
     from shared.clients.linear import LinearClient
+    team, project = _parse_linear_destination(dest)
     c = LinearClient()
-    # destination forms: "linear:benjaminos", "linear:eir:expertos", "linear:triage"
-    parts = dest.split(":", 2)
-    project = None
-    if len(parts) >= 2 and parts[1] != "triage":
-        project = parts[1] if parts[1] != "eir" else (parts[2] if len(parts) > 2 else None)
-    team = "EIR" if "eir" in dest else "Benjamin"
     issue = c.create_issue(title=item.title, description=item.description,
                            team=team, project=project)
-    return {"destination": dest, "id": issue.get("id"),
-            "identifier": issue.get("identifier"), "url": issue.get("url")}
+    return {"destination": dest, "team": team, "project": project,
+            "id": issue.get("id"),
+            "identifier": issue.get("identifier"),
+            "url": issue.get("url")}
+
+
 def _to_wiki(item, dest: str) -> dict:
     """Dispatch wiki:<path>/<file>.md. Creates file w/ unique stamped name."""
     from shared.clients.gws import GWSClient, WIKI_FOLDER_ID
@@ -143,8 +197,6 @@ def _format_wiki_content(item) -> str:
         lines.append(f"_Classifier reasoning: {item.reasoning}_")
     return "\n".join(lines) + "\n"
 
-if __name__ == "__main__":
-    main()
 
 
 def _to_supabase(item, dest: str) -> dict:
@@ -243,3 +295,7 @@ def _persist_envelope(envelope, source, receipts):
         import sys
         print(f"[pharoah_db] persist failed: {type(e).__name__}: {e}",
               file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()
