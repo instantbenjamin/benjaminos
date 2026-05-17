@@ -39,7 +39,7 @@ def print_envelope(e):
             print(f"         due: {it.due_date}")
 
 
-def dispatch(envelope) -> dict:
+def dispatch(envelope, source=None) -> dict:
     """Dispatch each item. Returns {item_index: [receipts]}."""
     receipts: dict = {}
     for item in envelope.items:
@@ -48,6 +48,7 @@ def dispatch(envelope) -> dict:
         for dest in all_dests:
             rs.append(_dispatch_one(item, dest))
         receipts[item.item_index] = rs
+    _persist_envelope(envelope, source, receipts)
     return receipts
 
 
@@ -228,3 +229,17 @@ def _run_gbrain(bin_path, body, env, dest, item):
                 "error": (r.stderr or r.stdout)[:300]}
     return {"destination": dest, "slug": slug,
             "stdout": r.stdout[:200].strip()}
+
+def _persist_envelope(envelope, source, receipts):
+    """Write envelope to pharoah.voicenotes_log. Fail-soft."""
+    try:
+        from shared.clients.pharoah_db import PharoahDB
+        db = PharoahDB()
+        # If we have a SourceArtifact, use its captured_at; else fall back
+        if source is not None:
+            envelope.transcript_excerpt = source.transcript[:200]
+        db.insert_envelope_with_source(envelope, source, receipts)
+    except Exception as e:
+        import sys
+        print(f"[pharoah_db] persist failed: {type(e).__name__}: {e}",
+              file=sys.stderr)
