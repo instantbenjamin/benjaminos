@@ -93,7 +93,7 @@ def _upsert(rows: list[dict], dry_run: bool) -> int:
             print(f"  ... +{len(rows) - 3} more")
         return len(rows)
     url = os.environ["SUPABASE_URL"]
-    key = os.environ["SUPABASE_ANON_KEY"]
+    key = (os.environ.get("SUPABASE_SERVICE_KEY") or os.environ["SUPABASE_ANON_KEY"])
     headers = {
         "apikey": key,
         "Authorization": f"Bearer {key}",
@@ -121,7 +121,7 @@ def _upsert(rows: list[dict], dry_run: bool) -> int:
 def _update_catalog(rows_count: int, ok: bool, err: str | None) -> None:
     """Self-report into pharoah.ingest_sources."""
     url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_ANON_KEY")
+    key = (os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_ANON_KEY"))
     if not url or not key:
         return
     now = dt.datetime.now(dt.timezone.utc).isoformat()
