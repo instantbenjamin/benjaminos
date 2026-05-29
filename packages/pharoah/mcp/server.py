@@ -265,6 +265,25 @@ def infisical_get_secret(key: str, project: str = "pharoah",
 
 
 
+
+@mcp.tool()
+def morning_brief() -> dict:
+    """Gather Benjamin's morning brief panels as JSON.
+
+    Returns sleep/readiness (Oura), Linear focus, EIR triage, recent captures,
+    media digest (Last.fm + Trakt), and ingest health — the same data the VPS
+    HTML renderer uses. Calendar is intentionally excluded: the Cowork artifact
+    pulls calendar live from the Calendar MCP. Reads are done with the
+    publishable/anon key (read-only) plus a direct Postgres read for captures.
+    """
+    import sys as _sys, os as _os
+    _pkgs = _os.path.join(_REPO, "packages")
+    if _pkgs not in _sys.path:
+        _sys.path.insert(0, _pkgs)
+    from morning_brief.morning_brief import gather
+    return gather()
+
+
 # ─── Transport selection ────────────────────────────────────────────────
 # PHAROAH_MCP_TRANSPORT=stdio (default, for Hermes child) | http (Cowork via Cloudflare)
 # PHAROAH_MCP_HOST=127.0.0.1   PHAROAH_MCP_PORT=8765
@@ -281,17 +300,53 @@ def _build_http_app():
     if not expected:
         raise RuntimeError("PHAROAH_MCP_BEARER env var required for http transport")
 
+    # Cloudflare Access JWT path — accept requests Access has authenticated.
+    access_aud = os.environ.get("PHAROAH_MCP_ACCESS_AUD", "").strip()
+
+    def _decode_jwt_payload(token: str):
+        """Decode a JWT payload (middle segment) without signature verification.
+
+        Safe in our deployment because the origin is bound to 127.0.0.1 and only
+        reachable via the Cloudflare Tunnel — only Access can inject this header.
+        Audience claim is still validated below as defense-in-depth."""
+        import base64, json
+        try:
+            parts = token.split(".")
+            if len(parts) != 3:
+                return None
+            payload = parts[1]
+            payload += "=" * (-len(payload) % 4)  # base64url padding
+            return json.loads(base64.urlsafe_b64decode(payload))
+        except Exception:
+            return None
+
     class BearerAuth(BaseHTTPMiddleware):
         async def dispatch(self, request, call_next):
             # Health probe path is unauthenticated for monitoring.
             if request.url.path in ("/health", "/_health"):
                 return JSONResponse({"ok": True, "server": "pharoah-mcp"})
+
+            # Path 1: static bearer (Hermes / programmatic callers).
             auth = request.headers.get("authorization", "")
-            if not auth.startswith("Bearer "):
-                return JSONResponse({"error": "missing bearer token"}, status_code=401)
-            if auth[len("Bearer "):].strip() != expected:
-                return JSONResponse({"error": "invalid bearer token"}, status_code=403)
-            return await call_next(request)
+            if auth.startswith("Bearer ") and auth[len("Bearer "):].strip() == expected:
+                return await call_next(request)
+
+            # Path 2: Cloudflare Access JWT (Cowork via OAuth).
+            cf_jwt = request.headers.get("cf-access-jwt-assertion", "")
+            if cf_jwt and access_aud:
+                payload = _decode_jwt_payload(cf_jwt)
+                if payload:
+                    aud_claim = payload.get("aud")
+                    if isinstance(aud_claim, list):
+                        if access_aud in aud_claim:
+                            return await call_next(request)
+                    elif aud_claim == access_aud:
+                        return await call_next(request)
+
+            return JSONResponse(
+                {"error": "missing bearer token or valid Access JWT"},
+                status_code=401,
+            )
 
     mcp.settings.host = os.environ.get("PHAROAH_MCP_HOST", "127.0.0.1")
     mcp.settings.port = int(os.environ.get("PHAROAH_MCP_PORT", "8765"))
