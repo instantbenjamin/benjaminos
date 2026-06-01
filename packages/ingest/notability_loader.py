@@ -92,9 +92,13 @@ def _load_from_zip(meta, zip_bytes, anthropic, groq):
     handwriting = ""
     if pdf_names:
         handwriting = anthropic.ocr_pdf(zf.read(pdf_names[0]))
-    m4as = sorted(n for n in zf.namelist() if n.endswith(".m4a"))
+    # Modern Notability stores recordings as .mp4 (used to be .m4a). Broaden
+    # the filter to catch every common audio container so we do not silently
+    # drop content when Notability changes its export format again.
+    _AUDIO_EXTS = (".m4a", ".mp4", ".wav", ".mp3", ".aac", ".flac", ".ogg", ".webm")
+    audio_files = sorted(n for n in zf.namelist() if n.lower().endswith(_AUDIO_EXTS))
     audio_transcripts = []
-    for m_name in m4as:
+    for m_name in audio_files:
         ab = zf.read(m_name)
         try:
             t = groq.transcribe_audio(ab,

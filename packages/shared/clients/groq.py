@@ -33,7 +33,17 @@ class GroqClient:
         prompt: str | None = None,
     ) -> str:
         """Transcribe audio via Groq Whisper. Returns the transcript text."""
-        files = {"file": (filename, audio_bytes, "audio/m4a")}
+        # Derive mime type from the filename extension. Groq Whisper accepts:
+        # flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, webm.
+        _MIME = {
+            ".m4a": "audio/m4a", ".mp4": "audio/mp4",
+            ".wav": "audio/wav", ".mp3": "audio/mpeg",
+            ".aac": "audio/aac", ".flac": "audio/flac",
+            ".ogg": "audio/ogg", ".webm": "audio/webm",
+        }
+        import os as _os
+        _ext = _os.path.splitext(filename)[1].lower()
+        files = {"file": (filename, audio_bytes, _MIME.get(_ext, "audio/m4a"))}
         data: dict[str, Any] = {"model": model, "response_format": "text"}
         if language:
             data["language"] = language
