@@ -29,7 +29,16 @@ def classify(source: SourceArtifact, model: str | None = None,
         return _stub_envelope(source, model)
     if not api_key:
         raise RuntimeError("ANTHROPIC_API_KEY not set")
-    env = _call_anthropic(source, model, api_key)
+    provider = os.environ.get("CLASSIFIER_PROVIDER", "groq").lower()
+    if provider == "groq":
+        from .prompts import CLASSIFIER_MODEL_GROQ
+        groq_key = os.environ.get("GROQ_API_KEY")
+        if groq_key:
+            env = _call_groq(source, CLASSIFIER_MODEL_GROQ, groq_key)
+        else:
+            env = _call_anthropic(source, model, api_key)
+    else:
+        env = _call_anthropic(source, model, api_key)
     env = enforce_guardrails(env, source.transcript)
     return env
 
@@ -99,6 +108,25 @@ def _entities_schema() -> dict[str, Any]:
     }
 
 
+def _call_groq(source: SourceArtifact, model: str, api_key: str) -> Envelope:
+    """Groq Llama classifier call. Returns a fully-formed Envelope."""
+    from shared.clients.groq import GroqClient
+    client = GroqClient(api_key=api_key)
+    user_msg = render_user_message(
+        source_id=source.source_id, source_type=source.source_type.value,
+        captured_at_iso=source.captured_at.isoformat(),
+        transcript=source.transcript,
+        title_hint=source.title_hint,
+        duration_seconds=source.metadata.get("duration_seconds"),
+    )
+    tool_input = client.classify_voicenote(
+        system_prompt=SYSTEM_PROMPT, user_message=user_msg,
+        envelope_tool_schema=_envelope_tool_schema(), model=model,
+        max_tokens=4096,
+    )
+    return _build_envelope_from_tool_input(source, tool_input, model)
+
+
 def _call_anthropic(source: SourceArtifact, model: str, api_key: str) -> Envelope:
     """Real Anthropic tool-use call. Returns a fully-formed Envelope."""
     from shared.clients.anthropic import AnthropicClient
@@ -113,6 +141,7 @@ def _call_anthropic(source: SourceArtifact, model: str, api_key: str) -> Envelop
     tool_input = client.classify_voicenote(
         system_prompt=SYSTEM_PROMPT, user_message=user_msg,
         envelope_tool_schema=_envelope_tool_schema(), model=model,
+        max_tokens=4096,
     )
     return _build_envelope_from_tool_input(source, tool_input, model)
 

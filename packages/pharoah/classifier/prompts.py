@@ -7,6 +7,7 @@ from __future__ import annotations
 
 CLASSIFIER_VERSION = "prompt-v1.3"
 CLASSIFIER_MODEL_PRIMARY = "claude-sonnet-4-6"
+CLASSIFIER_MODEL_GROQ = "llama-3.3-70b-versatile"
 CLASSIFIER_MODEL_FALLBACK = "claude-haiku-4-5-20251001"
 
 HARD_PRIVATE_TRIGGERS = (

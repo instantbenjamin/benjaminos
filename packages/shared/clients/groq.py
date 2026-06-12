@@ -52,3 +52,76 @@ class GroqClient:
         r = self._client.post("/audio/transcriptions", files=files, data=data)
         r.raise_for_status()
         return r.text.strip()
+
+    def classify_voicenote(
+        self, system_prompt: str, user_message: str,
+        envelope_tool_schema: dict, model: str,
+        max_tokens: int = 8192, temperature: float = 0.0,
+    ) -> dict:
+        """Classify a voicenote into Pharoah's Envelope shape using Groq Llama.
+
+        Mirrors AnthropicClient.classify_voicenote so the caller can swap
+        providers transparently. Returns the produce_envelope tool's input dict.
+
+        Groq's OpenAI-compatible chat API doesn't (yet) enforce a JSON
+        SCHEMA strictly — it does enforce a JSON OBJECT via response_format.
+        We inject the schema as a prompt instruction and parse on return.
+        On a parse miss we retry once with a stricter reminder.
+        """
+        import json as _json
+        schema_hint = _json.dumps(envelope_tool_schema, indent=2)
+        system = (
+            system_prompt + "\n\n"
+            "CRITICAL: respond with ONE JSON object that conforms exactly to "
+            "this schema. No prose, no markdown fences, no preamble. The JSON "
+            "object IS the produce_envelope tool input.\n\n"
+            "SCHEMA:\n" + schema_hint
+        )
+
+        # Truncate over-long transcripts. Llama has 128K context but Groq's
+        # per-request byte cap kicks in well before that on meeting transcripts.
+        # Routing decisions only need the first ~6K tokens of content.
+        MAX_USER_CHARS = 24000
+        u = user_message
+        if len(u) > MAX_USER_CHARS:
+            u = u[:MAX_USER_CHARS] + "\n\n[... transcript truncated for routing classification ...]"
+
+        import time as _time
+        def _call(extra_system: str = "") -> dict:
+            payload = {
+                "model": model,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "response_format": {"type": "json_object"},
+                "messages": [
+                    {"role": "system", "content": system + extra_system},
+                    {"role": "user",   "content": u},
+                ],
+            }
+            # Retry on 429 / 5xx with exponential backoff. 4 attempts total.
+            # VERBOSE_GROQ_ERR: raise on 4xx with the actual response body
+            # so we see what's wrong, not just the bare status code.
+            for attempt in range(4):
+                r = self._client.post("/chat/completions", json=payload)
+                if r.status_code == 429 or 500 <= r.status_code < 600:
+                    wait = float(r.headers.get("retry-after", 0)) or (2 ** attempt)
+                    wait = min(wait, 30.0)
+                    _time.sleep(wait)
+                    continue
+                if r.status_code >= 400:
+                    raise RuntimeError(
+                        f"Groq {r.status_code}: {r.text[:400]}"
+                    )
+                content = r.json()["choices"][0]["message"]["content"]
+                return _json.loads(content)
+            if r.status_code >= 400:
+                raise RuntimeError(f"Groq {r.status_code}: {r.text[:400]}")
+            content = r.json()["choices"][0]["message"]["content"]
+            return _json.loads(content)
+
+        try:
+            return _call()
+        except Exception as e:
+            # One retry with a sharper reminder
+            return _call("\n\nRETRY: your previous reply did not parse as "
+                         "valid JSON. Return ONLY the JSON object.")
