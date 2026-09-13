@@ -22,11 +22,13 @@ The pattern: **Drive holds what doesn't compile. This repo holds what runs.** Li
 benjaminos/
 ├── packages/
 │   ├── ingest/         # Capture sync scripts (Raindrop, Readwise, Workflowy, Voicenotes)
+│   ├── movie_calendar/ # Cinemateca → Trakt → ICS / Google Calendar
 │   ├── pharoah/        # Classifier, daily-brief renderer, twin-mind interface
 │   ├── hermes/         # SOUL.md (canonical), skills, config snapshots
 │   └── shared/         # Cross-package utilities: Supabase client, GBrain client, Linear client
 ├── apps/
 │   └── morning-artifact/   # 7-panel daily HTML artifact (BEN-19)
+├── skills/            # Portable workflow instructions; logic stays in packages/
 ├── infrastructure/
 │   ├── vps-scripts/    # Bash scripts run on VPS (wiki-sync, gbrain-*)
 │   └── cron/           # Cron specs as code
@@ -37,6 +39,8 @@ benjaminos/
 ```
 
 ## Quickstart
+
+Movie calendar: [portable skill](skills/cinemateca/SKILL.md) · [setup and scheduling](docs/runbooks/movie-calendar.md).
 
 ```bash
 git clone git@github.com:instantbenjamin/benjaminos.git

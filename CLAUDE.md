@@ -46,7 +46,7 @@ tests/<name>/test_<module>.py  # Tests mirror package layout
 ### Secrets handling
 
 - NEVER commit secrets. `.env` files are gitignored.
-- Runtime secrets come from **Infisical** (`pharoah/dev` workspace, project ID `67edc8d3-8fb7-437b-8104-1bcac28bb2cf`).
+- Runtime secrets come from **Infisical** (`pharoah/dev` workspace, project ID `97a8ec8d-c2af-44ce-94b2-71b806434076`, verified 2026-09-13). The older `67edc8d3-8fb7-437b-8104-1bcac28bb2cf` ID belongs to `platform-agents`, not Pharoah.
 - The VPS already has Infisical CLI logged in. Use `infisical run --env=dev -- <cmd>` to inject secrets without surfacing values to the agent's context.
 - For local dev: copy `.env.example` to `.env` and fill in only what you need.
 

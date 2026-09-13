@@ -1,0 +1,14 @@
+{
+  "state_dir": "~/.local/state/benjaminos/movie-calendar",
+  "selection": "list",
+  "trakt": {
+    "username": "YOUR_TRAKT_USERNAME",
+    "list_id": "YOUR_CINEMATECA_LIST_ID",
+    "add_reviewed_to_list": true
+  },
+  "google": {
+    "calendar_id": "YOUR_DEDICATED_CALENDAR_ID",
+    "subject": "YOUR_PERSONAL_WORKSPACE_EMAIL",
+    "service_account": "YOUR_BENJAMINOS_SERVICE_ACCOUNT_EMAIL"
+  }
+}

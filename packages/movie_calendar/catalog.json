@@ -1,0 +1,537 @@
+{
+  "schema_version": 1,
+  "reviewed_on": "2026-09-13",
+  "provenance": "Public Cinemateca programme, Trakt movie metadata and director credits manually reviewed. These are identity mappings, not a user list.",
+  "films": [
+    {
+      "title": "THE COLOR OF MONEY",
+      "year": 1986,
+      "director": "Martin Scorsese",
+      "trakt_id": 6895,
+      "trakt_title": "The Color of Money",
+      "imdb": "tt0090863",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "TRÁS-OS-MONTES",
+      "year": 1976,
+      "director": "António Reis, Margarida Cordeiro",
+      "trakt_id": 117112,
+      "trakt_title": "Tras-os-Montes",
+      "imdb": "tt0075354",
+      "verified_directors": [
+        "Margarida Cordeiro",
+        "António Reis"
+      ]
+    },
+    {
+      "title": "CAPE FEAR",
+      "year": 1991,
+      "director": "Martin Scorsese",
+      "trakt_id": 1053,
+      "trakt_title": "Cape Fear",
+      "imdb": "tt0101540",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "CASINO",
+      "year": 1995,
+      "director": "Martin Scorsese",
+      "trakt_id": 409,
+      "trakt_title": "Casino",
+      "imdb": "tt0112641",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "THE KING OF COMEDY",
+      "year": 1982,
+      "director": "Martin Scorsese",
+      "trakt_id": 220,
+      "trakt_title": "The King of Comedy",
+      "imdb": "tt0085794",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "BRINGING OUT THE DEAD",
+      "year": 1999,
+      "director": "Martin Scorsese",
+      "trakt_id": 4254,
+      "trakt_title": "Bringing Out the Dead",
+      "imdb": "tt0163988",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "LA SALAMANDRE",
+      "year": 1971,
+      "director": "Alain Tanner",
+      "trakt_id": 45290,
+      "trakt_title": "The Salamander",
+      "imdb": "tt0067701",
+      "verified_directors": [
+        "Alain Tanner"
+      ]
+    },
+    {
+      "title": "KUNDUN",
+      "year": 1997,
+      "director": "Martin Scorsese",
+      "trakt_id": 5010,
+      "trakt_title": "Kundun",
+      "imdb": "tt0119485",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "THE AGE OF INNOCENCE",
+      "year": 1993,
+      "director": "Martin Scorsese",
+      "trakt_id": 5628,
+      "trakt_title": "The Age of Innocence",
+      "imdb": "tt0106226",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "L’HYPOTHÈSE DU TABLEAU VOLÉ",
+      "year": 1979,
+      "director": "Raúl Ruiz",
+      "trakt_id": 66056,
+      "trakt_title": "The Hypothesis of the Stolen Painting",
+      "imdb": "tt0077707",
+      "verified_directors": [
+        "Raúl Ruiz"
+      ]
+    },
+    {
+      "title": "GANGS OF NEW YORK",
+      "year": 2002,
+      "director": "Martin Scorsese",
+      "trakt_id": 2100,
+      "trakt_title": "Gangs of New York",
+      "imdb": "tt0217505",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "VISAGES D’ENFANTS",
+      "year": 1923,
+      "director": "Jacques Feyder",
+      "trakt_id": 65515,
+      "trakt_title": "Faces of Children",
+      "imdb": "tt0016491",
+      "verified_directors": [
+        "Jacques Feyder"
+      ]
+    },
+    {
+      "title": "THE AVIATOR",
+      "year": 2004,
+      "director": "Martin Scorsese",
+      "trakt_id": 1752,
+      "trakt_title": "The Aviator",
+      "imdb": "tt0338751",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "CENDRES ET SANG",
+      "year": 2009,
+      "director": "Fanny Ardant",
+      "trakt_id": 44379,
+      "trakt_title": "Ashes and Blood",
+      "imdb": "tt1236182",
+      "verified_directors": [
+        "Fanny Ardant"
+      ]
+    },
+    {
+      "title": "A PERSONAL JOURNEY WITH MARTIN SCORSESE THROUGH AMERICAN MOVIES",
+      "year": 1995,
+      "director": "Martin Scorsese (e Michael Henry Wilson)",
+      "trakt_id": 39617,
+      "trakt_title": "A Personal Journey with Martin Scorsese Through American Movies",
+      "imdb": "tt0112120",
+      "verified_directors": [
+        "Michael Henry Wilson",
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "THE DEPARTED",
+      "year": 2006,
+      "director": "Martin Scorsese",
+      "trakt_id": 952,
+      "trakt_title": "The Departed",
+      "imdb": "tt0407887",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "MOONFLEET",
+      "year": 1955,
+      "director": "Fritz Lang",
+      "trakt_id": 18971,
+      "trakt_title": "Moonfleet",
+      "imdb": "tt0048387",
+      "verified_directors": [
+        "Fritz Lang"
+      ]
+    },
+    {
+      "title": "IL MIO VIAGGIO IN ITALIA",
+      "year": 1999,
+      "director": "Martin Scorsese",
+      "trakt_id": 37555,
+      "trakt_title": "My Voyage to Italy",
+      "imdb": "tt0173772",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "SCORPIO RISING",
+      "year": 1963,
+      "director": "Kenneth Anger",
+      "trakt_id": 32164,
+      "trakt_title": "Scorpio Rising",
+      "imdb": "tt0058555",
+      "verified_directors": [
+        "Kenneth Anger"
+      ]
+    },
+    {
+      "title": "OXALÁ",
+      "year": 1980,
+      "director": "António-Pedro Vasconcelos",
+      "trakt_id": 169146,
+      "trakt_title": "Oxalá",
+      "imdb": "tt0081292",
+      "verified_directors": [
+        "António-Pedro Vasconcelos"
+      ]
+    },
+    {
+      "title": "SHUTTER ISLAND",
+      "year": 2010,
+      "director": "Martin Scorsese",
+      "trakt_id": 6422,
+      "trakt_title": "Shutter Island",
+      "imdb": "tt1130884",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "SHINE A LIGHT",
+      "year": 2008,
+      "director": "Martin Scorsese",
+      "trakt_id": 3985,
+      "trakt_title": "Shine a Light",
+      "imdb": "tt0893382",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "BORDER LINE",
+      "year": 1992,
+      "director": "Danièle Dubroux",
+      "trakt_id": 255077,
+      "trakt_title": "Border Line",
+      "imdb": "tt0103860",
+      "verified_directors": [
+        "Danièle Dubroux"
+      ]
+    },
+    {
+      "title": "ORLANDO",
+      "year": 1992,
+      "director": "Sally Potter",
+      "trakt_id": 4600,
+      "trakt_title": "Orlando",
+      "imdb": "tt0107756",
+      "verified_directors": [
+        "Sally Potter"
+      ]
+    },
+    {
+      "title": "SHINJUKU BOYS",
+      "year": 1995,
+      "director": "Kim Longinotto, Jano Williams",
+      "trakt_id": 54551,
+      "trakt_title": "Shinjuku Boys",
+      "imdb": "tt0114427",
+      "verified_directors": [
+        "Kim Longinotto",
+        "Jano Williams"
+      ]
+    },
+    {
+      "title": "CINEMA – ALGUNS CORTES: CENSURA",
+      "year": 1999,
+      "director": "Manuel Mozos",
+      "trakt_id": 1147067,
+      "trakt_title": "Cinema — Alguns Cortes: Censura",
+      "imdb": "tt0198363",
+      "verified_directors": [
+        "Manuel Mozos"
+      ]
+    },
+    {
+      "title": "THE WOLF OF WALL STREET",
+      "year": 2013,
+      "director": "Martin Scorsese",
+      "trakt_id": 75735,
+      "trakt_title": "The Wolf of Wall Street",
+      "imdb": "tt0993846",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "HIGH ART",
+      "year": 1998,
+      "director": "Lisa Cholodenko",
+      "trakt_id": 24143,
+      "trakt_title": "High Art",
+      "imdb": "tt0139362",
+      "verified_directors": [
+        "Lisa Cholodenko"
+      ]
+    },
+    {
+      "title": "A LETTER TO ELIA",
+      "year": 2010,
+      "director": "Martin Scorsese (e Kent Jones)",
+      "trakt_id": 47532,
+      "trakt_title": "A Letter to Elia",
+      "imdb": "tt0808245",
+      "verified_directors": [
+        "Martin Scorsese",
+        "Kent Jones"
+      ]
+    },
+    {
+      "title": "SILENCE",
+      "year": 2016,
+      "director": "Martin Scorsese",
+      "trakt_id": 50142,
+      "trakt_title": "Silence",
+      "imdb": "tt0490215",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "THE LAST WALTZ",
+      "year": 1978,
+      "director": "Martin Scorsese",
+      "trakt_id": 8331,
+      "trakt_title": "The Last Waltz",
+      "imdb": "tt0077838",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "HUGO",
+      "year": 2011,
+      "director": "Martin Scorsese",
+      "trakt_id": 30474,
+      "trakt_title": "Hugo",
+      "imdb": "tt0970179",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "GEORGE HARRISON: LIVING IN THE MATERIAL WORLD",
+      "year": 2011,
+      "director": "Martin Scorsese",
+      "trakt_id": 1365451,
+      "trakt_title": "George Harrison: Living in the Material World",
+      "imdb": "tt1113829",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "L’HOMME BLESSÉ",
+      "year": 1983,
+      "director": "Patrice Chéreau",
+      "trakt_id": 1625,
+      "trakt_title": "The Wounded Man",
+      "imdb": "tt0084085",
+      "verified_directors": [
+        "Patrice Chéreau"
+      ]
+    },
+    {
+      "title": "THE IRON MASK",
+      "year": 1929,
+      "director": "Allan Dwan",
+      "trakt_id": 59298,
+      "trakt_title": "The Iron Mask",
+      "imdb": "tt0020030",
+      "verified_directors": [
+        "Allan Dwan"
+      ]
+    },
+    {
+      "title": "BLACK IS… BLACK AIN’T",
+      "year": 1994,
+      "director": "Marlon Riggs",
+      "trakt_id": 57184,
+      "trakt_title": "Black Is… Black Ain’t",
+      "imdb": "tt0109285",
+      "verified_directors": [
+        "Marlon Riggs"
+      ]
+    },
+    {
+      "title": "ANDRÉ VALENTE",
+      "year": 2004,
+      "director": "Catarina Ruivo",
+      "trakt_id": 254212,
+      "trakt_title": "Andre Valente",
+      "imdb": "tt0419445",
+      "verified_directors": [
+        "Catarina Ruivo"
+      ]
+    },
+    {
+      "title": "ZERO PATIENCE",
+      "year": 1993,
+      "director": "John Greyson",
+      "trakt_id": 63876,
+      "trakt_title": "Zero Patience",
+      "imdb": "tt0108649",
+      "verified_directors": [
+        "John Greyson"
+      ]
+    },
+    {
+      "title": "THE IRISHMAN",
+      "year": 2019,
+      "director": "Martin Scorsese",
+      "trakt_id": 242125,
+      "trakt_title": "The Irishman",
+      "imdb": "tt1302006",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "KILLERS OF THE FLOWER MOON",
+      "year": 2023,
+      "director": "Martin Scorsese",
+      "trakt_id": 313884,
+      "trakt_title": "Killers of the Flower Moon",
+      "imdb": "tt5537002",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "MÄDCHEN IN UNIFORM",
+      "year": 1931,
+      "director": "Leontine Sagan",
+      "trakt_id": 4928,
+      "trakt_title": "Mädchen in Uniform",
+      "imdb": "tt0022183",
+      "verified_directors": [
+        "Leontine Sagan",
+        "Carl Froelich"
+      ]
+    },
+    {
+      "title": "ROLLING THUNDER REVUE: A BOB DYLAN STORY BY MARTIN SCORSESE",
+      "year": 2019,
+      "director": "Martin Scorsese",
+      "trakt_id": 425430,
+      "trakt_title": "Rolling Thunder Revue: A Bob Dylan Story by Martin Scorsese",
+      "imdb": "tt9577852",
+      "verified_directors": [
+        "Martin Scorsese"
+      ]
+    },
+    {
+      "title": "BRANCA DE NEVE",
+      "year": 2000,
+      "director": "João César Monteiro",
+      "trakt_id": 62326,
+      "trakt_title": "Snow White",
+      "imdb": "tt0267155",
+      "verified_directors": [
+        "João César Monteiro"
+      ]
+    }
+  ],
+  "screening_overrides": {
+    "20294": [
+      {
+        "title": "SCORPIO RISING",
+        "year": 1963,
+        "director": "Kenneth Anger"
+      },
+      {
+        "title": "FATUCHA SUPERSTAR",
+        "year": 1976,
+        "director": "João Paulo Ferreira"
+      }
+    ],
+    "20304": [
+      {
+        "title": "SINFONIA DE CRISTAL",
+        "year": 1947,
+        "director": "Vítor Raposo"
+      },
+      {
+        "title": "O FOGO E O AÇO",
+        "year": 1966,
+        "director": "António Ruano"
+      },
+      {
+        "title": "5 TEMAS PARA REFINARIA & QUARTETO",
+        "year": 1971,
+        "director": "António de Macedo"
+      },
+      {
+        "title": "SETENAVE À VOL D’OISEAU",
+        "year": 1977,
+        "director": "Augusto Cabrita"
+      }
+    ],
+    "20308": [
+      {
+        "title": "RECOLHA DE DADOS",
+        "year": 2026,
+        "director": "Inês Oliveira"
+      },
+      {
+        "title": "DESCONTINUADOS",
+        "year": 2026,
+        "director": "Miguel Sales Lopes"
+      }
+    ]
+  },
+  "nonfilm_screenings": [
+    "20207",
+    "20282"
+  ]
+}

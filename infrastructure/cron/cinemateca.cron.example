@@ -1,0 +1,7 @@
+# Example only: choose ONE cadence after configuring/testing the runtime.
+# Use absolute paths for your VPS. Set BENJAMINOS_ROOT and CINEMATECA_CONFIG
+# in the operator's cron environment. Configure the named Infisical adapter.
+# Daily at 06:15 in the cron daemon's timezone:
+# 15 6 * * * /absolute/benjaminos/infrastructure/vps-scripts/cinemateca-sync.sh
+# Monthly, first day at 06:15:
+# 15 6 1 * * /absolute/benjaminos/infrastructure/vps-scripts/cinemateca-sync.sh

@@ -32,9 +32,14 @@ gws = [
   "google-api-python-client>=2.120",
   "google-auth>=2.30",
 ]
+movie-mcp = ["mcp>=1.28,<2"]
+
+[project.scripts]
+movie-calendar = "movie_calendar.cli:main"
+movie-calendar-mcp = "movie_calendar.mcp_server:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["packages/ingest", "packages/pharoah", "packages/hermes", "packages/shared"]
+packages = ["packages/ingest", "packages/pharoah", "packages/hermes", "packages/shared", "packages/movie_calendar"]
 
 [tool.ruff]
 line-length = 100
