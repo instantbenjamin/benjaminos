@@ -22,6 +22,7 @@ The pattern: **Drive holds what doesn't compile. This repo holds what runs.** Li
 benjaminos/
 ├── packages/
 │   ├── ingest/         # Capture sync scripts (Raindrop, Readwise, Workflowy, Voicenotes)
+│   ├── culture_calendar/ # Lisbon programmes → ICS / Google Calendar
 │   ├── movie_calendar/ # Cinemateca → Trakt → ICS / Google Calendar
 │   ├── pharoah/        # Classifier, daily-brief renderer, twin-mind interface
 │   ├── hermes/         # SOUL.md (canonical), skills, config snapshots
@@ -39,6 +40,8 @@ benjaminos/
 ```
 
 ## Quickstart
+
+Lisbon culture: [portable skill](skills/lisbon-culture/SKILL.md) · [setup and limitations](docs/runbooks/lisbon-culture.md).
 
 Movie calendar: [portable skill](skills/cinemateca/SKILL.md) · [setup and scheduling](docs/runbooks/movie-calendar.md).
 

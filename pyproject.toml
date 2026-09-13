@@ -35,11 +35,12 @@ gws = [
 movie-mcp = ["mcp>=1.28,<2"]
 
 [project.scripts]
+culture-calendar = "culture_calendar.cli:main"
 movie-calendar = "movie_calendar.cli:main"
 movie-calendar-mcp = "movie_calendar.mcp_server:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["packages/ingest", "packages/pharoah", "packages/hermes", "packages/shared", "packages/movie_calendar"]
+packages = ["packages/ingest", "packages/pharoah", "packages/hermes", "packages/shared", "packages/movie_calendar", "packages/culture_calendar"]
 
 [tool.ruff]
 line-length = 100
