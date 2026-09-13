@@ -12,7 +12,7 @@ from .storage import write_json
 
 
 class Trakt:
-    def __init__(self, state: Path, username: str):
+    def __init__(self, state: Path, username: str, *, load_tokens: bool = True):
         self.username = username
         self.client = {}
         if os.environ.get("TRAKT_CLIENT_FILE"):
@@ -24,8 +24,12 @@ class Trakt:
         self.token_path = Path(
             os.environ.get("TRAKT_TOKEN_FILE", str(state / "trakt-tokens.json"))
         ).expanduser()
-        self.tokens = json.loads(self.token_path.read_text()) if self.token_path.exists() else {}
-        if not self.tokens and os.environ.get("TRAKT_ACCESS_TOKEN"):
+        self.tokens = (
+            json.loads(self.token_path.read_text())
+            if load_tokens and self.token_path.exists()
+            else {}
+        )
+        if load_tokens and not self.tokens and os.environ.get("TRAKT_ACCESS_TOKEN"):
             self.tokens = {
                 "access_token": os.environ["TRAKT_ACCESS_TOKEN"],
                 "refresh_token": os.environ.get("TRAKT_REFRESH_TOKEN"),

@@ -81,7 +81,10 @@ Connect a new Trakt session if needed:
 ```
 
 Complete the printed device-code flow. Tokens are stored atomically with mode
-0600, refreshed before expiry, and kept on a persistent volume. A preview may
+0600. Login retrieves only the app client ID and secret; it does not require
+existing tokens in Infisical and can replace a damaged local token file.
+After login, stored tokens are
+refreshed before expiry and kept on a persistent volume. A preview may
 refresh OAuth tokens, but never changes Trakt lists or Google events. Existing
 private lists work with OAuth; making them public is unnecessary.
 

@@ -2,9 +2,11 @@
 
 import json
 import time
+from types import SimpleNamespace
 
 import httpx
 import pytest
+from movie_calendar.cli import run
 from movie_calendar.trakt import Trakt
 
 
@@ -80,3 +82,73 @@ def test_error_does_not_echo_body_or_token(monkeypatch, tmp_path):
         c.request("POST", "users/me/lists/1/items", body={"movies": []})
     assert "sensitive" not in str(exc.value)
     assert "test-access" not in str(exc.value)
+
+
+def test_reconnect_ignores_broken_previous_tokens(monkeypatch, tmp_path):
+    monkeypatch.delenv("TRAKT_CLIENT_FILE", raising=False)
+    monkeypatch.setenv("TRAKT_CLIENT_ID", "test-id")
+    monkeypatch.setenv("TRAKT_CLIENT_SECRET", "test-secret")
+    path = tmp_path / "old-tokens.json"
+    path.write_text("incomplete-json")
+    monkeypatch.setenv("TRAKT_TOKEN_FILE", str(path))
+    monkeypatch.setenv("TRAKT_ACCESS_TOKEN", "old-access")
+    monkeypatch.setenv("TRAKT_TOKEN_CREATED_AT", "invalid")
+    c = Trakt(tmp_path, "test-user", load_tokens=False)
+    try:
+        assert c.tokens == {}
+        assert c.token_path == path
+    finally:
+        c.http.close()
+
+
+def test_run_after_login_needs_no_infisical_token_seeds(monkeypatch, tmp_path):
+    monkeypatch.delenv("TRAKT_CLIENT_FILE", raising=False)
+    monkeypatch.delenv("TRAKT_TOKEN_FILE", raising=False)
+    (tmp_path / "trakt-tokens.json").write_text(
+        json.dumps(
+            {
+                "access_token": "local-access",
+                "refresh_token": "local-refresh",
+                "created_at": time.time(),
+                "expires_in": 3600,
+            }
+        )
+    )
+    calls = []
+
+    def fetch(args, **kwargs):
+        calls.append(args[3])
+        assert args[3] in {"benjaminos-trakt-clientid", "benjaminos-trakt-secret"}
+        return SimpleNamespace(returncode=0, stdout="client-value", stderr="")
+
+    def respond(request):
+        assert request.headers["Authorization"] == "Bearer local-access"
+        value = (
+            {"user": {"username": "test-user"}} if request.url.path.endswith("/settings") else []
+        )
+        return httpx.Response(200, json=value)
+
+    factory = httpx.Client
+    monkeypatch.setattr("movie_calendar.infisical.subprocess.run", fetch)
+    monkeypatch.setattr(
+        "movie_calendar.trakt.httpx.Client",
+        lambda **kwargs: factory(transport=httpx.MockTransport(respond), **kwargs),
+    )
+    monkeypatch.setattr(
+        "movie_calendar.cli.scrape",
+        lambda *args: {
+            "upcoming_screenings": [],
+            "fetched_at": "2026-09-13T12:00:00Z",
+            "scope": "test",
+        },
+    )
+    result = run(
+        {
+            "state_dir": str(tmp_path),
+            "infisical": {"command": ["infisical"]},
+            "trakt": {"username": "test-user", "list_id": "1"},
+        },
+        use_trakt=True,
+    )
+    assert result["trakt_additions"] == []
+    assert len(calls) == 2

@@ -15,12 +15,18 @@ TRAKT_KEYS = {
 
 
 @contextmanager
-def credentials(config: dict | None, *, trakt: bool, google: bool):
+def credentials(config: dict | None, *, trakt: bool, google: bool, trakt_tokens: bool = True):
     """Temporarily inject selected secrets. Never log subprocess output/errors."""
     if not config:
         yield
         return
     keys = dict(TRAKT_KEYS) if trakt else {}
+    if not trakt_tokens:
+        keys = {
+            name: secret
+            for name, secret in keys.items()
+            if name in {"TRAKT_CLIENT_ID", "TRAKT_CLIENT_SECRET"}
+        }
     if google:
         keys["BENJAMINOS_SA_JSON"] = "BENJAMINOS_SA_JSON"
     previous = {name: os.environ.get(name) for name in keys}

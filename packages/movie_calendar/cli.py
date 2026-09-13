@@ -3,6 +3,7 @@
 import argparse
 import datetime as dt
 import json
+import os
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -38,7 +39,18 @@ def run(
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     if catalog.get("schema_version") != 1:
         raise ValueError("Unsupported catalog schema")
-    with run_lock(state), credentials(config.get("infisical"), trakt=use_trakt, google=use_google):
+    token_path = Path(
+        os.environ.get("TRAKT_TOKEN_FILE", str(state / "trakt-tokens.json"))
+    ).expanduser()
+    with (
+        run_lock(state),
+        credentials(
+            config.get("infisical"),
+            trakt=use_trakt,
+            google=use_google,
+            trakt_tokens=not token_path.exists(),
+        ),
+    ):
         report = scrape(
             state / "cache",
             from_date or dt.datetime.now(ZoneInfo("Europe/Lisbon")).date().isoformat(),
@@ -125,8 +137,11 @@ def main() -> None:
     config = json.loads(args.config.expanduser().read_text(encoding="utf-8"))
     if args.command == "login":
         state = Path(config["state_dir"]).expanduser()
-        with run_lock(state), credentials(config.get("infisical"), trakt=True, google=False):
-            client = Trakt(state, config["trakt"]["username"])
+        with (
+            run_lock(state),
+            credentials(config.get("infisical"), trakt=True, google=False, trakt_tokens=False),
+        ):
+            client = Trakt(state, config["trakt"]["username"], load_tokens=False)
             try:
                 client.login()
             finally:
