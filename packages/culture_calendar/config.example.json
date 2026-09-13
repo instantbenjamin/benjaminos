@@ -1,0 +1,10 @@
+{
+  "state_dir": "~/.local/state/benjaminos/culture-calendar",
+  "excluded_institutions": [],
+  "google": {
+    "calendar_id": "REPLACE_WITH_DEDICATED_CALENDAR_ID",
+    "name": "Lisbon Culture Vulture",
+    "subject": "REPLACE_WITH_AUTHORIZED_GOOGLE_USER",
+    "service_account": "REPLACE_WITH_EXPECTED_SERVICE_ACCOUNT"
+  }
+}
