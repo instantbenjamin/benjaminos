@@ -66,5 +66,12 @@ node_modules/
 .hermes/sessions/
 .hermes/cache/
 .gbrain/
+
+# Cinemateca private runtime configuration, tokens and exports
+cinemateca.local.json
+trakt-tokens.json
+client.json
+tokens.json
+*.ics
 .claude/settings.json
 .claude/settings.local.json

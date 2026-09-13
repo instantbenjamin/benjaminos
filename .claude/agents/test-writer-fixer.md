@@ -45,13 +45,13 @@ Three modes:
 ```python
 import pytest
 
+
 @pytest.mark.integration  # skipped by default; runs with `pytest -m integration`
-def test_real_supabase_insert():
-    ...
+def test_real_supabase_insert(): ...
+
 
 @pytest.mark.slow  # skipped by default in fast CI; flagged in reports
-def test_full_wiki_import():
-    ...
+def test_full_wiki_import(): ...
 ```
 
 ### Mocking patterns

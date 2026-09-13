@@ -28,7 +28,7 @@ import os
 import re
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -56,33 +56,33 @@ RATE_DELAY = 0.2  # seconds between API calls
 COLLECTIONS = [
     # ---- Tier 1: knowledge top-level ----
     (33682282, "AI", None, 1),
-    (8248679,  "The Future is Now", None, 1),
-    (1165943,  "Thinking + Ideas", None, 1),
-    (695119,   "Tools + Services", None, 1),
-    (695264,   "Wellness", None, 1),
-    (693967,   "Work + Process", None, 1),
-    (693958,   "Startups", None, 1),
-    (1170347,  "Architecture", None, 1),
-    (758853,   "Finance", None, 1),
-    (695064,   "Music Creation", None, 1),
-    (693959,   "VC", None, 1),
-    (693960,   "Design-Product", None, 1),
-    (693969,   "Design-Visual", None, 1),
+    (8248679, "The Future is Now", None, 1),
+    (1165943, "Thinking + Ideas", None, 1),
+    (695119, "Tools + Services", None, 1),
+    (695264, "Wellness", None, 1),
+    (693967, "Work + Process", None, 1),
+    (693958, "Startups", None, 1),
+    (1170347, "Architecture", None, 1),
+    (758853, "Finance", None, 1),
+    (695064, "Music Creation", None, 1),
+    (693959, "VC", None, 1),
+    (693960, "Design-Product", None, 1),
+    (693969, "Design-Visual", None, 1),
     (33348100, "Photography", None, 1),
-    (952242,   "Food", None, 1),
-    (1017943,  "Parenting", None, 1),
+    (952242, "Food", None, 1),
+    (1017943, "Parenting", None, 1),
     (37779561, "Books", None, 1),
     (14371339, "Surfing", None, 1),
     (33435825, "Guitar", None, 1),
-    (1064690,  "Curiosities", None, 1),
-    (1364159,  "Marketing", None, 1),
-    (1184580,  "Writing", None, 1),
-    (695042,   "Brand + Narrative", None, 1),
-    (897280,   "Product", None, 1),
-    (842306,   "IT", None, 1),
-    (693966,   "Media", None, 1),
-    (4486257,  "Agency", None, 1),
-    (696117,   "Fishing", None, 1),
+    (1064690, "Curiosities", None, 1),
+    (1364159, "Marketing", None, 1),
+    (1184580, "Writing", None, 1),
+    (695042, "Brand + Narrative", None, 1),
+    (897280, "Product", None, 1),
+    (842306, "IT", None, 1),
+    (693966, "Media", None, 1),
+    (4486257, "Agency", None, 1),
+    (696117, "Fishing", None, 1),
     (30880609, "Coffee", None, 1),
     (70306536, "Music", None, 1),
     (70306585, "Meditation", None, 1),
@@ -91,18 +91,18 @@ COLLECTIONS = [
     (70306692, "Art", None, 1),
     (70306879, "Buddhism", None, 1),
     (16379840, "Adventures-Local", None, 1),
-    (6026679,  "ReadLater", None, 1),
+    (6026679, "ReadLater", None, 1),
     (53848145, "BJW-BenjaminOS", None, 1),
     (70063022, "EIR-Experts in Residence", None, 1),
-    (4907525,  "OpenProject", None, 1),
-    (1068787,  "My Portfolio", None, 1),
+    (4907525, "OpenProject", None, 1),
+    (1068787, "My Portfolio", None, 1),
     (39535342, "Portugal", None, 1),
     (63566450, "Black Friday", None, 1),
     (26557877, "Hubspot", None, 1),
     # ---- Tier 1: nested ----
     (33682286, "Midjourney", 33682282, 1),
     (33682298, "ChatGPT", 33682282, 1),
-    (33706513, "Music", 33682282, 1),                # AI > Music (different from top-level Music)
+    (33706513, "Music", 33682282, 1),  # AI > Music (different from top-level Music)
     (34821582, "Startup Studio", 33682282, 1),
     (42119063, "AI / Future of Work", 33682282, 1),
     (42111892, "AI Advisory Project", 33682282, 1),
@@ -113,59 +113,59 @@ COLLECTIONS = [
     (22598125, "Knowledgebase", 8248679, 1),
     (22598131, "Cultivate", 8248679, 1),
     (23669659, "Decentralized Mfg", 8248679, 1),
-    (1028651,  "Startup Compensation", 693958, 1),
+    (1028651, "Startup Compensation", 693958, 1),
     # ---- Tier 2: project archives, top-level ----
-    (3363586,  "WHT-1005", None, 2),
-    (998390,   "WHT-343", None, 2),
-    (998392,   "WHT-231", None, 2),
-    (998393,   "WHT-SFO", None, 2),
-    (1420738,  "WHT-448 Noe", None, 2),
+    (3363586, "WHT-1005", None, 2),
+    (998390, "WHT-343", None, 2),
+    (998392, "WHT-231", None, 2),
+    (998393, "WHT-SFO", None, 2),
+    (1420738, "WHT-448 Noe", None, 2),
     (27531770, "BRM-Braamcamp", None, 2),
-    (887224,   "SFO-House Project", None, 2),
+    (887224, "SFO-House Project", None, 2),
     (21688218, "HSN-House Numbers", None, 2),
     (22598142, "FSP-fuseproject", None, 2),
-    (1371620,  "QPT-Qapital", None, 2),
-    (695062,   "NXT-Project Next", None, 2),
-    (1165149,  "TRP-Tripstr", None, 2),
-    (799695,   "SPL-Superela", None, 2),
+    (1371620, "QPT-Qapital", None, 2),
+    (695062, "NXT-Project Next", None, 2),
+    (1165149, "TRP-Tripstr", None, 2),
+    (799695, "SPL-Superela", None, 2),
     (37779790, "SXP-Sixup", None, 2),
-    (716219,   "CVN-Cavan", None, 2),
+    (716219, "CVN-Cavan", None, 2),
     (27167888, "MMA-Mima", None, 2),
     (34417687, "NRT-Northstar", None, 2),
     (23037066, "GLD-Goldfront", None, 2),
-    (1258690,  "SPT-Spotify", None, 2),
-    (747167,   "SHP-Shopper", None, 2),
+    (1258690, "SPT-Spotify", None, 2),
+    (747167, "SHP-Shopper", None, 2),
     (34499831, "VAN-Vanlife", None, 2),
-    (5233722,  "UNI-Unison", None, 2),
-    (799696,   "UNT-Untold", None, 2),
-    (5192851,  "FXN-FX Networks", None, 2),
-    (1298190,  "FRN-Frances", None, 2),
+    (5233722, "UNI-Unison", None, 2),
+    (799696, "UNT-Untold", None, 2),
+    (5192851, "FXN-FX Networks", None, 2),
+    (1298190, "FRN-Frances", None, 2),
     (37780468, "BUK-Buk", None, 2),
-    (1148997,  "EXP-Expa", None, 2),
-    (1275668,  "MOD-Mod Space", None, 2),
-    (711230,   "FVR-Favorite", None, 2),
+    (1148997, "EXP-Expa", None, 2),
+    (1275668, "MOD-Mod Space", None, 2),
+    (711230, "FVR-Favorite", None, 2),
     (42451031, "Marea", None, 2),
     (37779610, "Prenuvo", None, 2),
     (37779713, "Wool", None, 2),
     (28193145, "Adventures", None, 2),
-    (693968,   "Design-Home", None, 2),
-    (1031553,  "Gear/Style", None, 2),
-    (902336,   "Video-Streaming", None, 2),
-    (6401839,  "Offsite", None, 2),
+    (693968, "Design-Home", None, 2),
+    (1031553, "Gear/Style", None, 2),
+    (902336, "Video-Streaming", None, 2),
+    (6401839, "Offsite", None, 2),
     (37779670, "Furniture", None, 2),
     (30880566, "Audiophile", None, 2),
     (28193139, "Projects (Archive)", None, 2),
     # ---- Tier 2: nested ----
-    (8088530,  "Toni", 28193139, 2),
+    (8088530, "Toni", 28193139, 2),
     (28193657, "Sweden", 28193145, 2),
     (26543773, "Sicily", 28193145, 2),
     (28193610, "Japan", 28193145, 2),
     (28193532, "Mexico", 28193145, 2),
     (28193218, "California", 28193145, 2),
-    (1123261,  "Brazil", 28193145, 2),
-    (959642,   "General", 28193145, 2),
+    (1123261, "Brazil", 28193145, 2),
+    (959642, "General", 28193145, 2),
     (31025299, "Dolomites Ski Trip", 28193145, 2),
-    (7350629,  "Portugal", 28193145, 2),                # Adventures > Portugal (distinct from top-level)
+    (7350629, "Portugal", 28193145, 2),  # Adventures > Portugal (distinct from top-level)
     (33128073, "Porto+North", 28193145, 2),
     (23771444, "Greece", 28193145, 2),
     (37779571, "Catskills", 28193145, 2),
@@ -181,10 +181,10 @@ COLLECTIONS = [
     (30956783, "Fireplace", 27531770, 2),
     (70307450, "Grill", 27531770, 2),
     # ---- Tier 3: skip-by-default ----
-    (567738,   "Pocket", None, 3),
-    (567734,   "Diigo", None, 3),
-    (567739,   "Delicious", None, 3),
-    (693963,   "File", None, 3),
+    (567738, "Pocket", None, 3),
+    (567734, "Diigo", None, 3),
+    (567739, "Delicious", None, 3),
+    (693963, "File", None, 3),
     (13067024, "Sprinter", None, 3),
 ]
 
@@ -193,6 +193,7 @@ LOOKUP = {c[0]: c for c in COLLECTIONS}
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def slugify(s, maxlen=60):
     s = (s or "").lower()
@@ -238,7 +239,7 @@ def get_token():
     print("  -> 'For Developers' -> create new app -> copy the Test token", file=sys.stderr)
     print("", file=sys.stderr)
     print("Then either:", file=sys.stderr)
-    print(f"  export RAINDROP_TOKEN=<your_token>", file=sys.stderr)
+    print("  export RAINDROP_TOKEN=<your_token>", file=sys.stderr)
     print(f"  echo 'RAINDROP_TOKEN=<your_token>' >> {VAULT}/.claude/.env", file=sys.stderr)
     sys.exit(1)
 
@@ -247,6 +248,7 @@ def api_get(path, token, params=None, retries=3):
     url = API_BASE + path
     if params:
         from urllib.parse import urlencode
+
         url += "?" + urlencode(params)
     for attempt in range(retries):
         try:
@@ -262,11 +264,14 @@ def api_get(path, token, params=None, retries=3):
                 print(f"  rate limited, sleeping {wait}s...", file=sys.stderr)
                 time.sleep(wait)
                 continue
-            print(f"ERROR: HTTP {e.code} on {path}: {e.read().decode('utf-8', errors='replace')[:300]}", file=sys.stderr)
+            print(
+                f"ERROR: HTTP {e.code} on {path}: {e.read().decode('utf-8', errors='replace')[:300]}",
+                file=sys.stderr,
+            )
             return None
         except URLError as e:
             print(f"ERROR: network error on {path}: {e}", file=sys.stderr)
-            time.sleep(2 ** attempt)
+            time.sleep(2**attempt)
     return None
 
 
@@ -274,12 +279,15 @@ def list_raindrops(collection_id, token):
     """Yield every raindrop in the collection, paginated."""
     page = 0
     while True:
-        data = api_get(f"/raindrops/{collection_id}", token, {"perpage": PERPAGE, "page": page, "sort": "-created"})
+        data = api_get(
+            f"/raindrops/{collection_id}",
+            token,
+            {"perpage": PERPAGE, "page": page, "sort": "-created"},
+        )
         if not data or "items" not in data:
             return
         items = data["items"]
-        for item in items:
-            yield item
+        yield from items
         if len(items) < PERPAGE:
             return
         page += 1
@@ -289,6 +297,7 @@ def list_raindrops(collection_id, token):
 # ---------------------------------------------------------------------------
 # File writers
 # ---------------------------------------------------------------------------
+
 
 def yaml_str(s):
     return json.dumps(str(s or ""))
@@ -301,6 +310,7 @@ def yaml_list(lst):
 
 
 _EXISTING_IDS_CACHE = None
+
 
 def _build_existing_ids_cache():
     """Walk raw/reading/raindrop/ once and extract source_ids from filenames."""
@@ -390,16 +400,33 @@ def touch_topic_page(cid, item_count, today):
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Bulk sync Raindrop bookmarks into the wiki vault.")
-    parser.add_argument("--tier", choices=["1", "2", "all"], default="all", help="Which tier to sync (default: all = tier 1+2).")
-    parser.add_argument("--collection", help="Sync only this collection by name (case-insensitive substring match). Bypasses tier filter.")
-    parser.add_argument("--dry-run", action="store_true", help="List what would be pulled, don't write files.")
-    parser.add_argument("--include-tier-3", action="store_true", help="Also sync Tier 3 (Pocket/Diigo/Delicious/File/Sprinter). Default: off.")
+    parser = argparse.ArgumentParser(
+        description="Bulk sync Raindrop bookmarks into the wiki vault."
+    )
+    parser.add_argument(
+        "--tier",
+        choices=["1", "2", "all"],
+        default="all",
+        help="Which tier to sync (default: all = tier 1+2).",
+    )
+    parser.add_argument(
+        "--collection",
+        help="Sync only this collection by name (case-insensitive substring match). Bypasses tier filter.",
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="List what would be pulled, don't write files."
+    )
+    parser.add_argument(
+        "--include-tier-3",
+        action="store_true",
+        help="Also sync Tier 3 (Pocket/Diigo/Delicious/File/Sprinter). Default: off.",
+    )
     args = parser.parse_args()
 
     token = get_token()
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
 
     # Pick which collections to sync
     if args.collection:
@@ -420,7 +447,9 @@ def main():
         targets = [c for c in COLLECTIONS if c[3] in tiers]
 
     print(f"Syncing {len(targets)} collections to {RAINDROP_ROOT}")
-    print(f"Tier filter: {args.tier}{'+3' if args.include_tier_3 else ''}{', collection=' + args.collection if args.collection else ''}")
+    print(
+        f"Tier filter: {args.tier}{'+3' if args.include_tier_3 else ''}{', collection=' + args.collection if args.collection else ''}"
+    )
     if args.dry_run:
         print("DRY RUN — no files will be written.\n")
 
@@ -462,7 +491,9 @@ def main():
             total_errors += 1
             continue
 
-        print(f"    {api_count} fetched, {c_created} created, {c_skipped} skipped, {c_starred} starred")
+        print(
+            f"    {api_count} fetched, {c_created} created, {c_skipped} skipped, {c_starred} starred"
+        )
         if not args.dry_run:
             touch_topic_page(cid, api_count, today)
 
@@ -473,7 +504,7 @@ def main():
 
     print()
     print("=" * 60)
-    print(f"Sync complete.")
+    print("Sync complete.")
     print(f"  Collections: {len(targets)}")
     print(f"  Created: {total_created}")
     print(f"  Skipped (already existed): {total_skipped}")
@@ -481,7 +512,7 @@ def main():
     print(f"  Errors: {total_errors}")
 
     if not args.dry_run:
-        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+        ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M")
         log_line = (
             f"{ts} | sync-raindrop | script | "
             f"tier={args.tier}{'+3' if args.include_tier_3 else ''} "
