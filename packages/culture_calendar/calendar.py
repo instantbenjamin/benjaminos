@@ -1,6 +1,7 @@
 """Upsert only owned culture records; preserve unrelated calendar entries and settings."""
 
 import datetime as dt
+import time
 from pathlib import Path
 
 from movie_calendar.google_calendar import GoogleCalendar
@@ -69,11 +70,21 @@ class CultureCalendar(GoogleCalendar):
         return changes
 
     def apply(self, changes: list[dict], ledger: dict) -> None:
-        for change in changes:
-            if change["action"] == "create":
-                result = (
-                    self.service.events()
-                    .import_(
+        pending = [c for c in changes if c["action"] in {"create", "update"}]
+        for offset in range(0, len(pending), 25):
+            errors = []
+
+            def completed(request_id, response, exception, batch_errors=errors):
+                if exception:
+                    batch_errors.append(exception)
+                else:
+                    ledger[request_id] = response["id"]
+                    write_json(self.state / "google-ledger.json", ledger)
+
+            batch = self.service.new_batch_http_request(callback=completed)
+            for change in pending[offset : offset + 25]:
+                if change["action"] == "create":
+                    request = self.service.events().import_(
                         calendarId=self.calendar_id,
                         body={
                             **change["body"],
@@ -81,23 +92,21 @@ class CultureCalendar(GoogleCalendar):
                             "reminders": {"useDefault": False},
                         },
                     )
-                    .execute()
-                )
-            elif change["action"] == "update":
-                body = dict(change["body"])
-                for key in ("start", "end"):
-                    body[key] = {"date": None, "dateTime": None, "timeZone": None, **body[key]}
-                result = (
-                    self.service.events()
-                    .patch(
+                else:
+                    body = dict(change["body"])
+                    for key in ("start", "end"):
+                        body[key] = {"date": None, "dateTime": None, "timeZone": None, **body[key]}
+                    request = self.service.events().patch(
                         calendarId=self.calendar_id,
                         eventId=change["event_id"],
                         body=body,
                         sendUpdates="none",
                     )
-                    .execute()
+                batch.add(request, request_id=change["uid"])
+            batch.execute()
+            if errors:
+                raise RuntimeError(
+                    f"{len(errors)} Google writes failed; successes saved. Rerun preview before retrying."
                 )
-            else:
-                continue
-            ledger[change["uid"]] = result["id"]
-            write_json(self.state / "google-ledger.json", ledger)
+            if offset + 25 < len(pending):
+                time.sleep(3)

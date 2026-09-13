@@ -48,7 +48,11 @@ def event(
         dt.date.fromisoformat(end)
     else:
         start, end = timestamp(start), timestamp(end)
-    if end <= start:
+    if (
+        (end <= start)
+        if all_day
+        else (dt.datetime.fromisoformat(end) <= dt.datetime.fromisoformat(start))
+    ):
         raise ValueError("Event end must follow start")
     key = f"{source}:{identity}"
     return dict(

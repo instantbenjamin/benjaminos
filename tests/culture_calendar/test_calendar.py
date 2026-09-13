@@ -135,7 +135,9 @@ def test_google_roundtrip_preserves_reminders_and_removals(tmp_path):
     api = FakeEvents()
     cal = object.__new__(CultureCalendar)
     cal.calendar_id, cal.state = "dedicated", tmp_path
-    cal.service = SimpleNamespace(events=lambda: api)
+    cal.service = SimpleNamespace(
+        events=lambda: api, new_batch_http_request=lambda callback: FakeBatch(callback)
+    )
     e = event(
         "ccb", "1", "Film", "2026-09-13T20:00", "2026-09-13T21:00", "CCB", "https://www.ccb.pt/"
     )
@@ -156,3 +158,35 @@ def test_date_and_datetime_are_not_equivalent():
     assert not same(
         {"start": {"date": "2026-09-13"}}, {"start": {"dateTime": "2026-09-13T20:00:00+01:00"}}
     )
+
+
+class FakeBatch:
+    def __init__(self, callback):
+        self.callback = callback
+        self.requests = []
+
+    def add(self, request, request_id):
+        self.requests.append((request_id, request))
+
+    def execute(self):
+        for request_id, request in self.requests:
+            try:
+                result = request.execute()
+            except Exception as exc:
+                self.callback(request_id, None, exc)
+            else:
+                self.callback(request_id, result, None)
+
+
+def test_event_across_fall_clock_change():
+    e = event(
+        "ccb",
+        "night",
+        "Night show",
+        "2026-10-25T00:45:00Z",
+        "2026-10-25T01:15:00Z",
+        "CCB",
+        "https://www.ccb.pt/",
+    )
+    assert e["start"] == "2026-10-25T01:45:00+01:00"
+    assert e["end"] == "2026-10-25T01:15:00+00:00"
