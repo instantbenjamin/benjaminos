@@ -190,3 +190,30 @@ def test_event_across_fall_clock_change():
     )
     assert e["start"] == "2026-10-25T01:45:00+01:00"
     assert e["end"] == "2026-10-25T01:15:00+00:00"
+
+
+def test_recover_ledger_after_interrupted_import(tmp_path):
+    import json
+
+    api = FakeEvents()
+    cal = object.__new__(CultureCalendar)
+    cal.calendar_id, cal.state = "dedicated", tmp_path
+    cal.service = SimpleNamespace(
+        events=lambda: api, new_batch_http_request=lambda callback: FakeBatch(callback)
+    )
+    e = event(
+        "ccb",
+        "interrupted",
+        "Film",
+        "2026-09-13T20:00",
+        "2026-09-13T21:00",
+        "CCB",
+        "https://www.ccb.pt/",
+    )
+    api.import_(calendarId="dedicated", body={**google_body(e), "iCalUID": e["uid"]}).execute()
+    ledger = {}
+    changes = cal.plan([e], ledger)
+    assert changes[0]["action"] == "unchanged"
+    cal.apply(changes, ledger)
+    assert json.loads((tmp_path / "google-ledger.json").read_text()) == {e["uid"]: "1"}
+    assert api.writes == 1

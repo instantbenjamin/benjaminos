@@ -60,6 +60,8 @@ class CultureCalendar(GoogleCalendar):
         for e in events:
             body = google_body(e)
             old = current.get(e["uid"])
+            if old:
+                ledger[e["uid"]] = old["id"]
             if (old and old.get("status") == "cancelled") or (not old and e["uid"] in ledger):
                 action = "skip_removed"
             else:
@@ -70,6 +72,7 @@ class CultureCalendar(GoogleCalendar):
         return changes
 
     def apply(self, changes: list[dict], ledger: dict) -> None:
+        write_json(self.state / "google-ledger.json", ledger)
         pending = [c for c in changes if c["action"] in {"create", "update"}]
         for offset in range(0, len(pending), 25):
             errors = []
