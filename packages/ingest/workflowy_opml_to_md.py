@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Convert WorkFlowy OPML export to markdown, splitting PARA top-levels at depth 1."""
-import argparse, re
+
+import argparse
+import re
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -57,7 +59,11 @@ def yaml_str(s):
 
 def fm(title, slug, parent_slug, node_count, today, opml_filename, extra_tags=None):
     tags = ["workflowy", "bujo"] + (extra_tags or [])
-    parent_uri = f"workflowy://export/{slug}" if parent_slug is None else f"workflowy://export/{parent_slug}/{slug}"
+    parent_uri = (
+        f"workflowy://export/{slug}"
+        if parent_slug is None
+        else f"workflowy://export/{parent_slug}/{slug}"
+    )
     workflowy_path = f"{parent_slug}/{title}" if parent_slug else title
     return [
         "---",
@@ -74,8 +80,10 @@ def fm(title, slug, parent_slug, node_count, today, opml_filename, extra_tags=No
         f"workflowy_path: {yaml_str(workflowy_path)}",
         f"node_count: {node_count}",
         "wiki_refs: []",
-        "---", "",
-        f"# {title}", "",
+        "---",
+        "",
+        f"# {title}",
+        "",
     ]
 
 
@@ -95,7 +103,7 @@ def main():
 
     opml = Path(args.opml).resolve()
     out = Path(args.out).resolve()
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
 
     print(f"Reading: {opml}")
     print(f"Writing: {out}")
@@ -108,8 +116,12 @@ def main():
 
     written = 0
     bundled = 0
-    misc_lines = fm("Workflowy root miscellany", "_misc", None, 0, today, opml.name, extra_tags=["misc"])
-    misc_lines.append(f"_Bundled root-level Workflowy nodes with fewer than {BUNDLE_THRESHOLD} children. Each appears as its own H2 section below._\n")
+    misc_lines = fm(
+        "Workflowy root miscellany", "_misc", None, 0, today, opml.name, extra_tags=["misc"]
+    )
+    misc_lines.append(
+        f"_Bundled root-level Workflowy nodes with fewer than {BUNDLE_THRESHOLD} children. Each appears as its own H2 section below._\n"
+    )
 
     for tl in top:
         title = tl.attrib.get("text", "").strip() or "untitled"
@@ -159,7 +171,9 @@ def main():
         print(f"  [bundle] _misc.md  ({bundled} small roots bundled)")
 
     print()
-    print(f"{'(dry-run) ' if args.dry_run else ''}Wrote {written} files + {1 if bundled else 0} bundle ({bundled} bundled entries). Total root nodes: {len(top)}.")
+    print(
+        f"{'(dry-run) ' if args.dry_run else ''}Wrote {written} files + {1 if bundled else 0} bundle ({bundled} bundled entries). Total root nodes: {len(top)}."
+    )
 
 
 if __name__ == "__main__":

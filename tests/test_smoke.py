@@ -5,9 +5,9 @@ import pytest
 
 def test_packages_importable():
     """All four packages should import without error."""
+    import hermes  # noqa: F401
     import ingest  # noqa: F401
     import pharoah  # noqa: F401
-    import hermes  # noqa: F401
     import shared  # noqa: F401
 
 
